@@ -2,6 +2,10 @@ import requests
 import re
 from datetime import datetime, timedelta, timezone
 
+from config import BASE
+from models import Plan
+
+
 BASE = "https://maps.six.nsw.gov.au/arcgis/rest/services/sixmaps/Boundaries/MapServer"
 PLAN_LAYER = 2
 
@@ -75,14 +79,11 @@ def _decode(field, value, classsubtype, field_domains, subtype_field_domains):
     return value
 
 
-
-def get_plan_info():
+def get_plan_info(plan_label: str):
     """
-    Takes a plan number string like 'DP574558' or 'SP10027'
-    and returns metadata about that plan.
+        Takes a plan number string like 'DP574558' or 'SP10027'
+        and returns metadata about that plan.
     """
-    plan_label = input('Enter a plan label: ')
-
     prefix, number, suffix = _parse_plan_label(plan_label)
 
     field_domains, subtype_map, subtype_field_domains = _load_domain_lookups()
@@ -124,24 +125,128 @@ def get_plan_info():
 
     classsubtype = attrs.get("classsubtype")
 
-    result = {
-        "plan":              plan_label.upper(),
-        "subtype":           subtype_map.get(classsubtype, classsubtype),
-        "is_current":        _decode("iscurrent",        attrs.get("iscurrent"),        classsubtype, field_domains, subtype_field_domains),
-        "is_surveyed":       _decode("issurveyed",       attrs.get("issurveyed"),        classsubtype, field_domains, subtype_field_domains),
-        "has_stratum":       _decode("hasstratum",       attrs.get("hasstratum"),        classsubtype, field_domains, subtype_field_domains),
-        "purpose":           _decode("planpurpose",      attrs.get("planpurpose"),       classsubtype, field_domains, subtype_field_domains),
-        "extent_status":     _decode("planextentstatus", attrs.get("planextentstatus"),  classsubtype, field_domains, subtype_field_domains),
-        "registration_date": _ms_to_date(attrs.get("registrationdate")),
-        "survey_date":       _ms_to_date(attrs.get("surveydate")),
-        "process_state":     attrs.get("processstate"),
-    }
 
-    for key, value in result.items():
-        print(f"{key}: {value}")
+    is_surveyed_raw = _decode("issurveyed", attrs.get("issurveyed"), classsubtype, field_domains, subtype_field_domains)
+    is_current_raw  = _decode("iscurrent",  attrs.get("iscurrent"),  classsubtype, field_domains, subtype_field_domains)
+    has_stratum_raw = _decode("hasstratum", attrs.get("hasstratum"), classsubtype, field_domains, subtype_field_domains)
+
+    return Plan(
+        plan_label        = plan_label.upper(),
+        plan_type         = prefix,
+        plan_number       = number,
+        is_surveyed       = is_surveyed_raw == "True" if is_surveyed_raw is not None else None,
+        is_current        = is_current_raw  == "True" if is_current_raw  is not None else None,
+        has_stratum       = has_stratum_raw == "True" if has_stratum_raw is not None else None,
+        purpose           = _decode("planpurpose",      attrs.get("planpurpose"),      classsubtype, field_domains, subtype_field_domains),
+        extent_status     = _decode("planextentstatus", attrs.get("planextentstatus"), classsubtype, field_domains, subtype_field_domains),
+        registration_date = _ms_to_date(attrs.get("registrationdate")),
+        survey_date       = _ms_to_date(attrs.get("surveydate")),
+        process_state     = attrs.get("processstate"),
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+# def get_plan_info():
+#     """
+#     Takes a plan number string like 'DP574558' or 'SP10027'
+#     and returns metadata about that plan.
+#     """
+#     plan_label = input('Enter a plan label: ')
+
+#     prefix, number, suffix = _parse_plan_label(plan_label)
+
+#     field_domains, subtype_map, subtype_field_domains = _load_domain_lookups()
+
+#     wanted_subtype = 1 if prefix == "DP" else 2 if prefix == "SP" else None
+#     subtypes = [wanted_subtype] if wanted_subtype in subtype_map else list(subtype_map.keys())
+
+#     attrs = None
+#     for subtype in subtypes:
+#         where = f"(classsubtype = {subtype}) AND (plannumber = {number})"
+#         if suffix:
+#             where += f" AND (plannumbersuffix = '{suffix}')"
+#         else:
+#             where += " AND (plannumbersuffix IS NULL OR plannumbersuffix = '')"
+
+#         url = f"{BASE}/{PLAN_LAYER}/query"
+#         r = requests.get(url, params={
+#             "where":             where,
+#             "outFields":         "*",
+#             "returnGeometry":    "false",
+#             "resultRecordCount": 1,
+#             "f":                 "json"
+#         }, timeout=60)
+#         r.raise_for_status()
+#         js = r.json()
+
+#         if "error" in js:
+#             err = js["error"]
+#             raise RuntimeError(f"ArcGIS error {err.get('code')}: {err.get('message')}")
+
+#         feats = js.get("features") or []
+#         if feats:
+#             attrs = feats[0].get("attributes") or {}
+#             break
+
+#     if not attrs:
+#         print(f"Plan {plan_label} not found")
+#         return
+
+#     classsubtype = attrs.get("classsubtype")
+
+#     result = {
+#         "plan":              plan_label.upper(),
+#         "subtype":           subtype_map.get(classsubtype, classsubtype),
+#         "is_current":        _decode("iscurrent",        attrs.get("iscurrent"),        classsubtype, field_domains, subtype_field_domains),
+#         "is_surveyed":       _decode("issurveyed",       attrs.get("issurveyed"),        classsubtype, field_domains, subtype_field_domains),
+#         "has_stratum":       _decode("hasstratum",       attrs.get("hasstratum"),        classsubtype, field_domains, subtype_field_domains),
+#         "purpose":           _decode("planpurpose",      attrs.get("planpurpose"),       classsubtype, field_domains, subtype_field_domains),
+#         "extent_status":     _decode("planextentstatus", attrs.get("planextentstatus"),  classsubtype, field_domains, subtype_field_domains),
+#         "registration_date": _ms_to_date(attrs.get("registrationdate")),
+#         "survey_date":       _ms_to_date(attrs.get("surveydate")),
+#         "process_state":     attrs.get("processstate"),
+#     }
+
+#     for key, value in result.items():
+#         print(f"{key}: {value}")
 
 
         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # def get_plan_info(plan_label: str):
 #     """
 #     Takes a plan number string like 'DP574558' or 'SP10027'
