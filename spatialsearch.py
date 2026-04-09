@@ -1,37 +1,49 @@
 from search import search
 
+# result = search("483 GEORGE STREET SYDNEY", 150)
+
+# if result is None:
+#     print("Search failed")
+# else:
+#     print(f"Address: {result.address.resolved_string}")
+#     print(f"Suburb: {result.address.suburb}")
+#     print(f"LGA: {result.address.lga}")
+#     print(f"Easting: {result.address.easting}")
+#     print(f"Northing: {result.address.northing}")
+
+#     print(f"\nSubject lot: {result.subject_lot.plan_label} — {result.subject_lot.lot_number}")
+
+#     print(f"\nNearby lots ({len(result.nearby_lots)}):")
+#     for lot in result.nearby_lots:
+#         subject_marker = " ← SUBJECT" if lot.is_subject else ""
+#         print(f"  {lot.plan_label} — {lot.lot_number} — {lot.its_title_status_label}{subject_marker}")
+
+#     print(f"\nPlans ({len(result.plans)}):")
+#     for plan in result.plans:
+#         print(f"  {plan.plan_label} — surveyed: {plan.is_surveyed} — {plan.registration_date}")
+
+#     print(f"\nSurvey marks ({len(result.survey_marks)}):")
+#     for mark in result.survey_marks:
+#         print(f"  {mark.mark_number} — {mark.mark_type} — {mark.gda_class}")
+
+
+
+
+import json
+from search import search
+from export import to_geojson
+
+# result = search("483 GEORGE STREET SYDNEY", 150)
+# geojson = to_geojson(result)
+# print(json.dumps(geojson, indent=2))
+
 result = search("483 GEORGE STREET SYDNEY", 150)
+geojson = to_geojson(result)
 
-if result is None:
-    print("Search failed")
-else:
-    print(f"Address: {result.address.resolved_string}")
-    print(f"Suburb: {result.address.suburb}")
-    print(f"LGA: {result.address.lga}")
-    print(f"Easting: {result.address.easting}")
-    print(f"Northing: {result.address.northing}")
+with open("output.json", "w") as f:
+    json.dump(geojson, f, indent=2)
 
-    print(f"\nSubject lot: {result.subject_lot.plan_label} — {result.subject_lot.lot_number}")
-
-    print(f"\nNearby lots ({len(result.nearby_lots)}):")
-    for lot in result.nearby_lots:
-        subject_marker = " ← SUBJECT" if lot.is_subject else ""
-        print(f"  {lot.plan_label} — {lot.lot_number} — {lot.its_title_status_label}{subject_marker}")
-
-    print(f"\nPlans ({len(result.plans)}):")
-    for plan in result.plans:
-        print(f"  {plan.plan_label} — surveyed: {plan.is_surveyed} — {plan.registration_date}")
-
-    print(f"\nSurvey marks ({len(result.survey_marks)}):")
-    for mark in result.survey_marks:
-        print(f"  {mark.mark_number} — {mark.mark_type} — {mark.gda_class}")
-
-
-
-
-
-
-
+print("Saved to output.json")
 
 
 
