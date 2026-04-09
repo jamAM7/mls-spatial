@@ -100,6 +100,8 @@ def get_lot_info(x: float, y: float, distance: int = 200) -> list[Lot] | None:
             geometry                    = _parse_geometry(rings),
         ))
 
+    # Note: is_subject is intentionally not set here — it defaults to False.
+    # search.py is responsible for identifying the subject lot and setting is_subject=True.
     return results
 
 

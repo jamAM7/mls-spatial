@@ -142,6 +142,9 @@ def get_plan_info(plan_label: str):
         registration_date = _ms_to_date(attrs.get("registrationdate")),
         survey_date       = _ms_to_date(attrs.get("surveydate")),
         process_state     = attrs.get("processstate"),
+
+        # Note: local_file is intentionally not set here — it defaults to None.
+        # drive.py is responsible for downloading the plan file and setting local_file.
     )
 
 

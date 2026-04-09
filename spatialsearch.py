@@ -29,10 +29,16 @@ from api.address import get_address_coordinates
 from api.lot import get_lot_info
 from api.survey_marks import get_survey_mark_info
 from api.plan import get_plan_info
+from utils import expand_address
 
-address = get_address_coordinates("87 BUNARBA ROAD GYMEA BAY")
-if address:
-    lots = get_lot_info(address.easting, address.northing, 30)
+
+address = expand_address("483 GEORGE STREET SYDNEY")
+address_object = get_address_coordinates(address)
+
+if address_object is None:
+    print("Address is none")
+if address_object:
+    lots = get_lot_info(address_object.easting, address_object.northing, 30)
     if lots:
         for lot in lots:
             print(f"{lot.plan_label} — {lot.lot_number} — {lot.its_title_status_label}")
@@ -40,7 +46,7 @@ if address:
 
 
     print("\n" + "Survey Marks")
-    survey_marks = get_survey_mark_info(address.easting, address.northing, 50)
+    survey_marks = get_survey_mark_info(address_object.easting, address_object.northing, 100)
     if survey_marks:
         for survey_mark in survey_marks:
             print(f"{survey_mark.mark_number} — {survey_mark.mark_type} — {survey_mark.mark_status}")

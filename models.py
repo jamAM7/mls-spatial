@@ -33,14 +33,14 @@ class Address:
     input_string: str               # as typed by the user
 
     # From [ADDR] — geocoding
-    resolved_string: str            # normalised form e.g. "87 BUNARBA ROAD GYMEA BAY NSW 2227"
+    resolved_string: str            # normalised form e.g. "1 PIT STREET SYDNEY"
     longitude: float                # WGS84
     latitude: float                 # WGS84
     easting: float                  # GDA2020 MGA56
     northing: float                 # GDA2020 MGA56
 
     # From [ADMIN] — administrative boundaries (spatial query at address point)
-    suburb: Optional[str] = None    # e.g. "GYMEA BAY"
+    suburb: Optional[str] = None    # e.g. "MIRANDA"
     lga: Optional[str] = None       # e.g. "SUTHERLAND SHIRE"
     parish: Optional[str] = None    # e.g. "WORONORA"
     county: Optional[str] = None    # e.g. "CUMBERLAND"
@@ -211,6 +211,7 @@ class SurveyMark:
     # When this record was fetched from the API.
     # If more than 6 months old, discard and re-fetch before use.
     # Check: (datetime.now() - mark.retrieved_at).days > 180
+    
 
 
 # ── SearchResult ──────────────────────────────────────────────────────────────

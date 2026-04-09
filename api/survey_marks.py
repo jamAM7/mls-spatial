@@ -38,31 +38,6 @@ def get_survey_mark_info(x: float, y: float, distance: int = 200) -> list[Survey
 
     for feature in features:
         attrs = feature["attributes"]
-        #rings = feature.get("geometry", {}).get("rings", [])
-
-        # its_title_status_raw = attrs.get("itstitlestatus")
-        # stratum_level_raw    = attrs.get("stratumlevel")
-        # has_stratum_raw      = attrs.get("hasstratum")
-
-
-        # results.append(SurveyMark(
-        #     mark_number             = attrs.get("marknumber"),
-        #     mark_type               = attrs.get("marktype"),
-        #     mark_status             = attrs.get("markstatus"),
-        #     mark_symbol             = attrs.get("marksymbol"),
-        #     easting                 = feature["geometry"]["x"],
-        #     northing                = feature["geometry"]["y"],
-        #     zone                    = attrs.get("mgazone"),
-        #     gda_class               = attrs.get("gdaclass"),
-        #     pos_uncertainty         = attrs.get("gdaposuncertainty_label"),
-        #     loc_uncertainty         = attrs.get("gdalocuncertainty_label"),
-        #     source                  = attrs.get("gdasource"),
-        #     csf                     = attrs.get("mgacsf2020"),
-        #     convergence             = attrs.get("mgacon"),
-        #     ahd_height              = attrs.get("ahdheight_label"),
-        #     ahd_class               = attrs.get("ahdclass"),
-        #     ausgeoid2020            = attrs.get("ausgeoid2020"),
-        # ))
         
 
         results.append(SurveyMark(
@@ -133,6 +108,8 @@ def get_survey_mark_info(x: float, y: float, distance: int = 200) -> list[Survey
 
             # Data currency
             retrieved_at            = datetime.now(),
+            # retrieved_at is set at time of API call.
+            # Staleness check (> 180 days) will be implemented in search.py when caching is added (Phase 4).
         ))    
 
     return results
