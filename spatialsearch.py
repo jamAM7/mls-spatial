@@ -4,6 +4,8 @@ from pathlib import Path
 from search import search
 from export import to_geojson, fetch_cre_map_image
 
+
+
 result = search("483 GEORGE STREET SYDNEY", 150)
 
 # Save GeoJSON
@@ -21,3 +23,11 @@ if result.cre_map_image:
     print(f"Saved to {result.cre_map_image}")
 else:
     print("CRE map image failed")
+
+
+
+
+
+#   STILL IN TESTING
+from drive import download_plans
+result = download_plans(result, output_folder)

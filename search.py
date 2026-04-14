@@ -57,6 +57,7 @@ def search(address_input: str, radius_m: int) -> SearchResult | None:
             if plan:
                 plans.append(plan)
 
+    # Get unique plans from nearby lots
     # plans = []
     # seen_plan_labels = set()
     # for lot in lots:

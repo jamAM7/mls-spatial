@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 .env
 output/
+credentials.json
+token.json
+NOTES_drive.md
+drive_plans_fetch.py
