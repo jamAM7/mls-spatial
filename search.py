@@ -42,15 +42,31 @@ def search(address_input: str, radius_m: int) -> SearchResult | None:
                 lot.is_subject = True
                 break
 
-    # Get unique plans from nearby lots
+    # Get unique plans from nearby lots ---
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    # Deduplicate plan labels first
+    seen_plan_labels = list({lot.plan_label for lot in lots})
+
+    # Fetch all plans in parallel
     plans = []
-    seen_plan_labels = set()
-    for lot in lots:
-        if lot.plan_label not in seen_plan_labels:
-            seen_plan_labels.add(lot.plan_label)
-            plan = get_plan_info(lot.plan_label)
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(get_plan_info, label): label for label in seen_plan_labels}
+        for future in as_completed(futures):
+            plan = future.result()
             if plan:
                 plans.append(plan)
+
+    # plans = []
+    # seen_plan_labels = set()
+    # for lot in lots:
+    #     if lot.plan_label not in seen_plan_labels:
+    #         seen_plan_labels.add(lot.plan_label)
+    #         plan = get_plan_info(lot.plan_label)
+    #         if plan:
+    #             plans.append(plan)
+
+
 
     # Get survey marks
     survey_marks = get_survey_mark_info(address.easting, address.northing, radius_m) or []

@@ -4,6 +4,9 @@ Converts a SearchResult into a GeoJSON FeatureCollection.
 """
 
 from models import SearchResult, Lot, SurveyMark
+from pathlib import Path
+from models import SearchResult, Lot, SurveyMark
+import requests
 
 
 def _lot_feature(lot: Lot) -> dict:
@@ -167,3 +170,131 @@ def to_geojson(result: SearchResult) -> dict:
 # Endpoint: https://maps.six.nsw.gov.au/arcgis/rest/services/sixmaps/CRE/MapServer/export
 # See SPEC.md for full details.
 # Required before server.py can return cre_map_image in the SearchResult.
+
+
+
+
+
+
+
+
+def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m: int = 500) -> Path | None:
+    """
+    Fetches a PNG raster image of the cadastral map from the CRE MapServer.
+    map_radius_m controls the area shown — defaults to 500m regardless of search radius.
+    """
+    from api.lot import get_lot_info
+
+    # Get lots for the larger map area
+    map_lots = get_lot_info(result.address.easting, result.address.northing, map_radius_m)
+    if not map_lots:
+        return None
+
+    all_eastings = []
+    all_northings = []
+
+    for lot in map_lots:
+        for point in lot.geometry:
+            all_eastings.append(point[0])
+            all_northings.append(point[1])
+
+    if not all_eastings:
+        return None
+
+    # Calculate bounding box with 10% buffer
+    xmin = min(all_eastings)
+    xmax = max(all_eastings)
+    ymin = min(all_northings)
+    ymax = max(all_northings)
+
+    x_buffer = (xmax - xmin) * 0.1
+    y_buffer = (ymax - ymin) * 0.1
+
+    xmin -= x_buffer
+    xmax += x_buffer
+    ymin -= y_buffer
+    ymax += y_buffer
+
+    # Fetch PNG
+    url = "https://maps.six.nsw.gov.au/arcgis/rest/services/sixmaps/CRE/MapServer/export"
+    params = {
+        "bbox":   f"{xmin},{ymin},{xmax},{ymax}",
+        "bboxSR": "7856",
+        "size":   "2400,1800",
+        "format": "png",
+        "f":      "image",
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code != 200:
+        return None
+
+    output_folder.mkdir(parents=True, exist_ok=True)
+    image_path = output_folder / "cre_map.png"
+    image_path.write_bytes(response.content)
+
+    return image_path
+
+
+
+
+
+
+
+
+
+
+
+# def fetch_cre_map_image(result: SearchResult, output_folder: Path) -> Path | None:
+#     """
+#     Fetches a PNG raster image of the cadastral map from the CRE MapServer
+#     for the bounding box of all nearby lots.
+#     Saves to output_folder/cre_map.png and returns the path.
+#     """
+#     # Collect all coordinates from all lot geometries
+#     all_eastings = []
+#     all_northings = []
+
+#     for lot in result.nearby_lots:
+#         for point in lot.geometry:
+#             all_eastings.append(point[0])
+#             all_northings.append(point[1])
+
+#     if not all_eastings:
+#         return None
+
+#     # Calculate bounding box
+#     xmin = min(all_eastings)
+#     xmax = max(all_eastings)
+#     ymin = min(all_northings)
+#     ymax = max(all_northings)
+
+#     # Add 10% buffer
+#     x_buffer = (xmax - xmin) * 0.1
+#     y_buffer = (ymax - ymin) * 0.1
+
+#     xmin -= x_buffer
+#     xmax += x_buffer
+#     ymin -= y_buffer
+#     ymax += y_buffer
+
+#     # Fetch the PNG from CRE MapServer
+#     url = "https://maps.six.nsw.gov.au/arcgis/rest/services/sixmaps/CRE/MapServer/export"
+#     params = {
+#         "bbox":   f"{xmin},{ymin},{xmax},{ymax}",
+#         "bboxSR": "7856",
+#         "size":   "1200,900",
+#         "format": "png",
+#         "f":      "image",
+#     }
+
+#     response = requests.get(url, params=params)
+#     if response.status_code != 200:
+#         return None
+
+#     # Save the PNG
+#     output_folder.mkdir(parents=True, exist_ok=True)
+#     image_path = output_folder / "cre_map.png"
+#     image_path.write_bytes(response.content)
+
+#     return image_path

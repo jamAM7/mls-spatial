@@ -11,6 +11,9 @@ PLAN_LAYER = 2
 
 PLAN_TOKEN_RE = re.compile(r"^\s*(DP|SP)\s*0*(\d+)\s*([A-Z])?\s*$", re.IGNORECASE)
 
+# Cache domain lookups — loaded once per session, reused for every plan query
+_domain_cache = None
+
 
 def _parse_plan_label(plan_label: str):
     """Splits 'DP574558' into ('DP', 574558, '')"""
@@ -90,6 +93,12 @@ def _to_surveyed_bool(decoded_value):
     else:
         return None  # Unresearched, Undefined etc
 
+def _get_domain_lookups():
+    global _domain_cache
+    if _domain_cache is None:
+        _domain_cache = _load_domain_lookups()
+    return _domain_cache
+
 def get_plan_info(plan_label: str):
     """
         Takes a plan number string like 'DP574558' or 'SP10027'
@@ -97,7 +106,8 @@ def get_plan_info(plan_label: str):
     """
     prefix, number, suffix = _parse_plan_label(plan_label)
 
-    field_domains, subtype_map, subtype_field_domains = _load_domain_lookups()
+    # field_domains, subtype_map, subtype_field_domains = _load_domain_lookups()
+    field_domains, subtype_map, subtype_field_domains = _get_domain_lookups()
 
     wanted_subtype = 1 if prefix == "DP" else 2 if prefix == "SP" else None
     subtypes = [wanted_subtype] if wanted_subtype in subtype_map else list(subtype_map.keys())
