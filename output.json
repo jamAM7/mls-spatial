@@ -478,7 +478,7 @@
         "plan_number": 79775,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -539,7 +539,7 @@
         "plan_number": 66011,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -637,7 +637,7 @@
         "plan_number": 177234,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -727,7 +727,7 @@
         "plan_number": 435519,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -772,7 +772,7 @@
         "plan_number": 435519,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1000,7 +1000,7 @@
         "plan_number": 66550,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1122,7 +1122,7 @@
         "plan_number": 434888,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1220,7 +1220,7 @@
         "plan_number": 64289,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1289,7 +1289,7 @@
         "plan_number": 939220,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1334,7 +1334,7 @@
         "plan_number": 74422,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1489,7 +1489,7 @@
         "plan_number": 70535,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1603,7 +1603,7 @@
         "plan_number": 70312,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1656,7 +1656,7 @@
         "plan_number": 960138,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1701,7 +1701,7 @@
         "plan_number": 950582,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1762,7 +1762,7 @@
         "plan_number": 70267,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1811,7 +1811,7 @@
         "plan_number": 65322,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1864,7 +1864,7 @@
         "plan_number": 60727,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1913,7 +1913,7 @@
         "plan_number": 75248,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -1958,7 +1958,7 @@
         "plan_number": 68093,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -2003,7 +2003,7 @@
         "plan_number": 68057,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -2056,7 +2056,7 @@
         "plan_number": 88666,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -2101,7 +2101,7 @@
         "plan_number": 64996,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -2316,7 +2316,7 @@
         "plan_number": 440232,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -2414,7 +2414,7 @@
         "plan_number": 960138,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -2463,7 +2463,7 @@
         "plan_number": 67995,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -2642,7 +2642,7 @@
         "plan_number": 66734,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -2699,7 +2699,7 @@
         "plan_number": 172795,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -2979,7 +2979,7 @@
         "plan_number": 80276,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -3105,7 +3105,7 @@
         "plan_number": 69955,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -3203,7 +3203,7 @@
         "plan_number": 60367,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -3252,7 +3252,7 @@
         "plan_number": 64913,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -3297,7 +3297,7 @@
         "plan_number": 66544,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -4393,7 +4393,7 @@
         "plan_number": 179789,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -4600,7 +4600,7 @@
         "plan_number": 912211,
         "section_number": "",
         "is_subject": false,
-        "is_surveyed": false,
+        "is_surveyed": null,
         "registration_date": "1960-12-31",
         "its_title_status_label": "Torrens Title",
         "has_stratum": true,
@@ -4774,7 +4774,7 @@
         "ahd_class": "LB",
         "mga_easting_label": "334133.614",
         "mga_northing_label": "6250335.733",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -4800,7 +4800,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334139.743",
         "mga_northing_label": "6250322.787",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -4826,7 +4826,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334174.865",
         "mga_northing_label": "6250490.721",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -4852,7 +4852,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334176.554",
         "mga_northing_label": "6250468.771",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -4878,7 +4878,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334112.033",
         "mga_northing_label": "6250509.341",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -4904,7 +4904,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334110.691",
         "mga_northing_label": "6250499.647",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -4930,7 +4930,7 @@
         "ahd_class": "LB",
         "mga_easting_label": "334049.515",
         "mga_northing_label": "6250501.809",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -4956,7 +4956,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334050.367",
         "mga_northing_label": "6250511.845",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -4982,7 +4982,7 @@
         "ahd_class": "LB",
         "mga_easting_label": "334000.381",
         "mga_northing_label": "6250348.912",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5008,7 +5008,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334011.350",
         "mga_northing_label": "6250347.919",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5034,7 +5034,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334013.099",
         "mga_northing_label": "6250334.953",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5060,7 +5060,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334125",
         "mga_northing_label": "6250519",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5086,7 +5086,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334152",
         "mga_northing_label": "6250520",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5112,7 +5112,7 @@
         "ahd_class": "LB",
         "mga_easting_label": "333993.428",
         "mga_northing_label": "6250491.261",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5138,7 +5138,7 @@
         "ahd_class": "LB",
         "mga_easting_label": "334148",
         "mga_northing_label": "6250482",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5164,7 +5164,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334050.527",
         "mga_northing_label": "6250511.824",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5190,7 +5190,7 @@
         "ahd_class": "U",
         "mga_easting_label": "333992",
         "mga_northing_label": "6250508",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5216,7 +5216,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334015.688",
         "mga_northing_label": "6250507.545",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5242,7 +5242,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334039.464",
         "mga_northing_label": "6250510.921",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5268,7 +5268,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334148.553",
         "mga_northing_label": "6250482.586",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5294,7 +5294,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334175",
         "mga_northing_label": "6250464",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5320,7 +5320,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334177",
         "mga_northing_label": "6250488",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5346,7 +5346,7 @@
         "ahd_class": "B",
         "mga_easting_label": "333977.584",
         "mga_northing_label": "6250537.047",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5372,7 +5372,7 @@
         "ahd_class": "U",
         "mga_easting_label": "333979",
         "mga_northing_label": "6250506",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5398,7 +5398,7 @@
         "ahd_class": "LC",
         "mga_easting_label": "334152.470",
         "mga_northing_label": "6250520.420",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5424,7 +5424,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334176.068",
         "mga_northing_label": "6250463.934",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5450,7 +5450,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334033.575",
         "mga_northing_label": "6250576.732",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5476,7 +5476,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334138.297",
         "mga_northing_label": "6250487.910",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5502,7 +5502,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334110.709",
         "mga_northing_label": "6250499.648",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5528,7 +5528,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334001.978",
         "mga_northing_label": "6250335.906",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5554,7 +5554,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334108.389",
         "mga_northing_label": "6250509.182",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5580,7 +5580,7 @@
         "ahd_class": "U",
         "mga_easting_label": "333992",
         "mga_northing_label": "6250401",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5606,7 +5606,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334016.834",
         "mga_northing_label": "6250334.574",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5632,7 +5632,7 @@
         "ahd_class": "LC",
         "mga_easting_label": "334148.569",
         "mga_northing_label": "6250482.574",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5658,7 +5658,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334047.692",
         "mga_northing_label": "6250529.243",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5684,7 +5684,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334042.423",
         "mga_northing_label": "6250580.893",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5710,7 +5710,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334052.258",
         "mga_northing_label": "6250343.142",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5736,7 +5736,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334070.793",
         "mga_northing_label": "6250341.526",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5762,7 +5762,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334001.617",
         "mga_northing_label": "6250422.593",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5788,7 +5788,7 @@
         "ahd_class": "LC",
         "mga_easting_label": "334133.632",
         "mga_northing_label": "6250335.723",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5814,7 +5814,7 @@
         "ahd_class": "B",
         "mga_easting_label": "333944.669",
         "mga_northing_label": "6250406.012",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5840,7 +5840,7 @@
         "ahd_class": "U",
         "mga_easting_label": "334011",
         "mga_northing_label": "6250348",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5866,7 +5866,7 @@
         "ahd_class": "LC",
         "mga_easting_label": "334177.684",
         "mga_northing_label": "6250489.507",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5892,7 +5892,7 @@
         "ahd_class": "B",
         "mga_easting_label": "333981.553",
         "mga_northing_label": "6250504.710",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5918,7 +5918,7 @@
         "ahd_class": "B",
         "mga_easting_label": "333956.514",
         "mga_northing_label": "6250402.199",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5944,7 +5944,7 @@
         "ahd_class": "B",
         "mga_easting_label": "333982.833",
         "mga_northing_label": "6250493.853",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5970,7 +5970,7 @@
         "ahd_class": "B",
         "mga_easting_label": "334011.366",
         "mga_northing_label": "6250347.897",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -5996,7 +5996,7 @@
         "ahd_class": "B",
         "mga_easting_label": "333999.346",
         "mga_northing_label": "6250349.920",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -6022,7 +6022,7 @@
         "ahd_class": "B",
         "mga_easting_label": "333992.508",
         "mga_northing_label": "6250506.163",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -6048,7 +6048,7 @@
         "ahd_class": "U",
         "mga_easting_label": "333994",
         "mga_northing_label": "6250398",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -6074,7 +6074,7 @@
         "ahd_class": "B",
         "mga_easting_label": "333994.278",
         "mga_northing_label": "6250398.622",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -6100,7 +6100,7 @@
         "ahd_class": "B",
         "mga_easting_label": "333993.851",
         "mga_northing_label": "6250402.474",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -6126,7 +6126,7 @@
         "ahd_class": "U",
         "mga_easting_label": "333994.506",
         "mga_northing_label": "6250397.947",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -6152,7 +6152,7 @@
         "ahd_class": "U",
         "mga_easting_label": "333994",
         "mga_northing_label": "6250402",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -6178,7 +6178,7 @@
         "ahd_class": "LD",
         "mga_easting_label": "334051.186",
         "mga_northing_label": "6250345.422",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     },
     {
@@ -6204,7 +6204,7 @@
         "ahd_class": "LD",
         "mga_easting_label": "334070.111",
         "mga_northing_label": "6250343.762",
-        "retrieved_at": "2026-04-09T13:23:48.077842"
+        "retrieved_at": "2026-04-14T09:20:08.984092"
       }
     }
   ]

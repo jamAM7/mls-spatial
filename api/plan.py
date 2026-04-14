@@ -78,6 +78,17 @@ def _decode(field, value, classsubtype, field_domains, subtype_field_domains):
         return field_domains[field].get(value, value)
     return value
 
+def _to_surveyed_bool(decoded_value):
+    """
+    Converts issurveyed decoded string to bool or None.
+    True = Survey, False = Compilation, None = Unresearched/Undefined
+    """
+    if decoded_value == "True":
+        return True
+    elif decoded_value == "False":
+        return False
+    else:
+        return None  # Unresearched, Undefined etc
 
 def get_plan_info(plan_label: str):
     """
@@ -134,7 +145,8 @@ def get_plan_info(plan_label: str):
         plan_label        = plan_label.upper(),
         plan_type         = prefix,
         plan_number       = number,
-        is_surveyed       = is_surveyed_raw == "True" if is_surveyed_raw is not None else None,
+        # is_surveyed       = is_surveyed_raw == "True" if is_surveyed_raw is not None else None,
+        is_surveyed       = _to_surveyed_bool(is_surveyed_raw), # Dont think this is working (seems to be issue with 6maps API)
         is_current        = is_current_raw  == "True" if is_current_raw  is not None else None,
         has_stratum       = has_stratum_raw == "True" if has_stratum_raw is not None else None,
         purpose           = _decode("planpurpose",      attrs.get("planpurpose"),      classsubtype, field_domains, subtype_field_domains),
