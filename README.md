@@ -52,3 +52,18 @@ Enter 'x' to exit.
 
 ## Data Sources
 - NSW Spatial Services: https://portal.spatial.nsw.gov.au
+
+
+## Running the Service
+
+Start the FastAPI server:
+
+The service will be available at `http://localhost:8000`
+
+Interactive API documentation is available at `http://localhost:8000/docs`
+
+## Endpoints
+
+- `GET /health` — confirms the service is running
+- `GET /search?address={address}&radius_m={radius_m}` — returns GeoJSON FeatureCollection for an address (default radius 200m)
+- `GET /plan/{plan_label}` — returns metadata for a single plan e.g. `/plan/DP574558`
