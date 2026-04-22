@@ -56,11 +56,26 @@ Enter 'x' to exit.
 
 ## Running the Service
 
-Start the FastAPI server:
+### Navigate to the project directory and activate the virtual environment:
+
+cd path/to/pyconsole
+
+venv\Scripts\activate
+
+### Start the FastAPI server:
+
+uvicorn server:app --reload --port 8000
 
 The service will be available at `http://localhost:8000`
 
 Interactive API documentation is available at `http://localhost:8000/docs`
+
+The server runs until you press `Ctrl+C`. Use `--reload` during development 
+to automatically restart when code changes are saved.
+
+Example search:
+
+http://localhost:8000/search?address=483 GEORGE STREET SYDNEY&radius_m=150
 
 ## Endpoints
 
