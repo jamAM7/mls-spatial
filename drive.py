@@ -181,19 +181,90 @@ def build_drive_query_for_plan_xml(planlabel: str) -> str:
     return q
 
 
+def _is_exact_plan_match(filename: str, pl_exact: str, digits: str) -> bool:
+    """
+    Returns True only if the filename contains the plan label as a whole token.
+    e.g. "DP123554" matches "DP123554.pdf" but NOT "DP1235542.pdf"
+    Also matches "Deposited Plan 123554" but not SP plans.
+    """
+    name_u = filename.upper()
+
+    # Must not be an SP plan
+    if re.search(r'\bSP\s*' + digits, name_u):
+        return False
+
+    # Exact label match as whole word e.g. "DP123554"
+    if re.search(r'\b' + re.escape(pl_exact) + r'\b', name_u):
+        return True
+
+    # "DP_123554" or "DP 123554"
+    if re.search(r'\bDP[\s_]0*' + digits + r'\b', name_u):
+        return True
+
+    # "Deposited Plan 123554"
+    if re.search(r'DEPOSITED[\s_]PLAN[\s_]0*' + digits + r'\b', name_u):
+        return True
+
+    return False
+
+
+# def choose_best_candidate(planlabel: str, candidates: list[dict]) -> Optional[dict]:
+#     """
+#     Pick the best PDF/image file for a plan.
+#     Rules: prefer PDF > has DP in name > exact label match > newest > largest
+#     Skips files containing '88b' in the name.
+#     """
+#     pl_exact, digits = plan_name_patterns(planlabel)
+
+#     filtered = []
+#     for f in candidates:
+#         name = f.get("name") or ""
+#         if "88b" in name.lower():
+#             print(f"  [skip 88b] {name}")
+#             continue
+#         filtered.append(f)
+
+#     if not filtered:
+#         return None
+
+#     def score(f: dict):
+#         name_u = (f.get("name") or "").upper()
+#         mime = (f.get("mimeType") or "").lower()
+
+#         is_pdf = 1 if mime == "application/pdf" else 0
+#         has_dp = 1 if "DP" in name_u else 0
+
+#         # match_strength = 0
+#         # if pl_exact and pl_exact in name_u:
+#         #     match_strength = 2
+#         # elif digits and digits in name_u:
+#         #     match_strength = 1
+
+#         if not _is_exact_plan_match(f.get("name", ""), pl_exact, digits):
+#             continue  # skip files that don't exactly match this plan
+#         match_strength = 2
+
+#         mtime = parse_rfc3339(f.get("modifiedTime") or "")
+#         size = int(f.get("size") or 0)
+
+#         return (is_pdf, has_dp, match_strength, mtime.timestamp(), size, name_u)
+
+#     return max(filtered, key=score)
+
 def choose_best_candidate(planlabel: str, candidates: list[dict]) -> Optional[dict]:
-    """
-    Pick the best PDF/image file for a plan.
-    Rules: prefer PDF > has DP in name > exact label match > newest > largest
-    Skips files containing '88b' in the name.
-    """
     pl_exact, digits = plan_name_patterns(planlabel)
 
     filtered = []
     for f in candidates:
         name = f.get("name") or ""
+        print(f"  [checking] {name}")  # THIS IS A TEMPORARY CHECK
+        # Skip 88b files
         if "88b" in name.lower():
             print(f"  [skip 88b] {name}")
+            continue
+        # Skip files that don't exactly match this plan
+        if not _is_exact_plan_match(name, pl_exact, digits):
+            print(f"  [skip no match] {name}")
             continue
         filtered.append(f)
 
@@ -203,31 +274,50 @@ def choose_best_candidate(planlabel: str, candidates: list[dict]) -> Optional[di
     def score(f: dict):
         name_u = (f.get("name") or "").upper()
         mime = (f.get("mimeType") or "").lower()
-
         is_pdf = 1 if mime == "application/pdf" else 0
         has_dp = 1 if "DP" in name_u else 0
-
-        match_strength = 0
-        if pl_exact and pl_exact in name_u:
-            match_strength = 2
-        elif digits and digits in name_u:
-            match_strength = 1
-
         mtime = parse_rfc3339(f.get("modifiedTime") or "")
         size = int(f.get("size") or 0)
-
-        return (is_pdf, has_dp, match_strength, mtime.timestamp(), size, name_u)
+        return (is_pdf, has_dp, 2, mtime.timestamp(), size, name_u)
 
     return max(filtered, key=score)
 
 
+# def choose_best_xml_candidate(planlabel: str, candidates: list[dict]) -> Optional[dict]:
+#     """Pick the best XML sidecar file for a plan."""
+#     filtered = []
+#     for f in candidates:
+#         name = f.get("name") or ""
+#         if "88b" in name.lower():
+#             print(f"  [skip 88b] {name}")
+#             continue
+#         filtered.append(f)
+
+#     if not filtered:
+#         return None
+
+#     def score(f: dict):
+#         name_l = (f.get("name") or "").lower()
+#         mime = (f.get("mimeType") or "").lower()
+#         ends_xml = 1 if name_l.endswith(".xml") else 0
+#         mime_xml = 1 if "xml" in mime else 0
+#         mtime = parse_rfc3339(f.get("modifiedTime") or "")
+#         size = int(f.get("size") or 0)
+#         return (ends_xml, mime_xml, mtime.timestamp(), size, name_l)
+
+#     return max(filtered, key=score)
+
 def choose_best_xml_candidate(planlabel: str, candidates: list[dict]) -> Optional[dict]:
-    """Pick the best XML sidecar file for a plan."""
+    pl_exact, digits = plan_name_patterns(planlabel)
+    
     filtered = []
     for f in candidates:
         name = f.get("name") or ""
         if "88b" in name.lower():
             print(f"  [skip 88b] {name}")
+            continue
+        if not _is_exact_plan_match(name, pl_exact, digits):
+            print(f"  [skip no match] {name}")
             continue
         filtered.append(f)
 

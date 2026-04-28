@@ -13,7 +13,7 @@ def sanitise_address(address: str) -> str:
 
 
 # Run search
-result = search("483 GEORGE STREET SYDNEY", 150)
+result = search("483 GEORGE STREET SYDNEY", 200)
 
 # Create output folder with sanitised address and date
 folder_name = f"{sanitise_address(result.address.resolved_string)}-{date.today().isoformat()}"
