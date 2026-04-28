@@ -43,34 +43,41 @@ def _parse_geometry(rings: list) -> list:
 
 
 def get_lot_info(x: float, y: float, distance: int = 200) -> list[Lot] | None:
-    """
-    Spatial query — returns all lots within distance metres of the given point.
-    Returns list[Lot] or None if nothing found.
-    """
-    params = {
-        "geometry":       f'{{"x": {x}, "y": {y}, "spatialReference": {{"wkid": 7856}}}}',
-        "geometryType":   "esriGeometryPoint",
-        "spatialRel":     "esriSpatialRelIntersects",
-        "distance":       distance,
-        "units":          "esriSRUnit_Meter",
-        "inSR":           "7856",
-        "outSR":          "7856",
-        "outFields":      "*",
-        "returnGeometry": True,
-        "f":              "json"
-    }
+    all_features = []
+    offset = 0
 
+    while True:
+        params = {
+            "geometry":       f'{{"x": {x}, "y": {y}, "spatialReference": {{"wkid": 7856}}}}',
+            "geometryType":   "esriGeometryPoint",
+            "spatialRel":     "esriSpatialRelIntersects",
+            "distance":       distance,
+            "units":          "esriSRUnit_Meter",
+            "inSR":           "7856",
+            "outSR":          "7856",
+            "outFields":      "*",
+            "returnGeometry": True,
+            "resultOffset":   offset,        # ← pagination start
+            "resultRecordCount": 100,        # ← page size
+            "f":              "json"
+        }
 
-    response = requests.get(LOT_URL, params=params)
-    data = response.json()
+        response = requests.get(LOT_URL, params=params)
+        data = response.json()
 
-    features = data.get("features", [])
-    if not features:
+        features = data.get("features", [])
+        all_features.extend(features)
+
+        if not data.get("exceededTransferLimit", False):
+            break  # got all results
+
+        offset += len(features)  # move to next page
+
+    if not all_features:
         return None
 
     results = []
-
-    for feature in features:
+    for feature in all_features:
         attrs = feature["attributes"]
         rings = feature.get("geometry", {}).get("rings", [])
 
@@ -103,6 +110,76 @@ def get_lot_info(x: float, y: float, distance: int = 200) -> list[Lot] | None:
     # Note: is_subject is intentionally not set here — it defaults to False.
     # search.py is responsible for identifying the subject lot and setting is_subject=True.
     return results
+
+
+
+
+# def get_lot_info(x: float, y: float, distance: int = 200) -> list[Lot] | None:
+#     """
+#     Spatial query — returns all lots within distance metres of the given point.
+#     Returns list[Lot] or None if nothing found.
+#     """
+#     params = {
+#         "geometry":       f'{{"x": {x}, "y": {y}, "spatialReference": {{"wkid": 7856}}}}',
+#         "geometryType":   "esriGeometryPoint",
+#         "spatialRel":     "esriSpatialRelIntersects",
+#         "distance":       distance,
+#         "units":          "esriSRUnit_Meter",
+#         "inSR":           "7856",
+#         "outSR":          "7856",
+#         "outFields":      "*",
+#         "returnGeometry": True,
+#         "f":              "json"
+#     }
+
+
+#     response = requests.get(LOT_URL, params=params)
+#     data = response.json()
+
+#     # Check if we're hitting the record limit
+#     features = data.get("features", [])
+#     exceeded = data.get("exceededTransferLimit", False)
+#     print(f"Lots returned: {len(features)}, exceeded limit: {exceeded}")
+
+#     features = data.get("features", [])
+#     if not features:
+#         return None
+
+#     results = []
+
+#     for feature in features:
+#         attrs = feature["attributes"]
+#         rings = feature.get("geometry", {}).get("rings", [])
+
+#         its_title_status_raw = attrs.get("itstitlestatus")
+#         stratum_level_raw    = attrs.get("stratumlevel")
+#         has_stratum_raw      = attrs.get("hasstratum")
+
+#         results.append(Lot(
+#             lot_number                  = attrs.get("lotnumber") or "",
+#             plan_label                  = attrs.get("planlabel") or "",
+#             section_number              = attrs.get("sectionnumber") or "",
+#             plan_number                 = attrs.get("plannumber"),
+#             plan_oid                    = attrs.get("planoid"),
+#             its_lot_id                  = attrs.get("itslotid"),
+#             cad_id                      = attrs.get("cadid"),
+#             controlling_authority_oid   = attrs.get("controllingauthorityoid"),
+#             classsubtype                = attrs.get("classsubtype"),
+#             its_title_status            = its_title_status_raw,
+#             its_title_status_label      = ITS_TITLE_STATUS.get(its_title_status_raw),
+#             stratum_level               = stratum_level_raw,
+#             stratum_level_label         = STRATUM_LEVEL.get(stratum_level_raw),
+#             has_stratum                 = bool(has_stratum_raw) if has_stratum_raw is not None else None,
+#             plan_lot_area               = attrs.get("planlotarea"),
+#             plan_lot_area_units         = attrs.get("planlotareaunits"),
+#             create_date                 = attrs.get("createdate"),
+#             modified_date               = attrs.get("modifieddate"),
+#             geometry                    = _parse_geometry(rings),
+#         ))
+
+#     # Note: is_subject is intentionally not set here — it defaults to False.
+#     # search.py is responsible for identifying the subject lot and setting is_subject=True.
+#     return results
 
 
 
