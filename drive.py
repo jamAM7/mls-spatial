@@ -181,28 +181,57 @@ def build_drive_query_for_plan_xml(planlabel: str) -> str:
     return q
 
 
-def _is_exact_plan_match(filename: str, pl_exact: str, digits: str) -> bool:
-    """
-    Returns True only if the filename contains the plan label as a whole token.
-    e.g. "DP123554" matches "DP123554.pdf" but NOT "DP1235542.pdf"
-    Also matches "Deposited Plan 123554" but not SP plans.
-    """
-    name_u = filename.upper()
+# def _is_exact_plan_match(filename: str, pl_exact: str, digits: str) -> bool:
+#     """
+#     Returns True only if the filename contains the plan label as a whole token.
+#     e.g. "DP123554" matches "DP123554.pdf" but NOT "DP1235542.pdf"
+#     Also matches "Deposited Plan 123554" but not SP plans.
+#     """
+#     name_u = filename.upper()
 
-    # Must not be an SP plan
-    if re.search(r'\bSP\s*' + digits, name_u):
+#     # Must not be an SP plan
+#     if re.search(r'\bSP\s*' + digits, name_u):
+#         return False
+
+#     # Exact label match as whole word e.g. "DP123554"
+#     if re.search(r'\b' + re.escape(pl_exact) + r'\b', name_u):
+#         return True
+
+#     # "DP_123554" or "DP 123554"
+#     if re.search(r'\bDP[\s_]0*' + digits + r'\b', name_u):
+#         return True
+
+#     # "Deposited Plan 123554"
+#     if re.search(r'DEPOSITED[\s_]PLAN[\s_]0*' + digits + r'\b', name_u):
+#         return True
+
+#     return False
+
+
+def _is_exact_plan_match(filename: str, pl_exact: str, digits: str) -> bool:
+    name_u = filename.upper()
+    prefix = pl_exact[:2]  # "DP" or "SP"
+    other_prefix = "SP" if prefix == "DP" else "DP"
+
+    # Reject if it matches the OTHER prefix type
+    if re.search(r'\b' + other_prefix + r'[\s_]?0*' + digits + r'\b', name_u):
         return False
 
-    # Exact label match as whole word e.g. "DP123554"
+    # Exact label match e.g. "DP123554"
     if re.search(r'\b' + re.escape(pl_exact) + r'\b', name_u):
         return True
 
     # "DP_123554" or "DP 123554"
-    if re.search(r'\bDP[\s_]0*' + digits + r'\b', name_u):
+    if re.search(r'\b' + prefix + r'[\s_]0*' + digits + r'\b', name_u):
         return True
 
-    # "Deposited Plan 123554"
-    if re.search(r'DEPOSITED[\s_]PLAN[\s_]0*' + digits + r'\b', name_u):
+    # "Deposited Plan 123554" or "Strata Plan 123554"
+    plan_word = "DEPOSITED[\s_]PLAN" if prefix == "DP" else "STRATA[\s_]PLAN"
+    if re.search(plan_word + r'[\s_]0*' + digits + r'\b', name_u):
+        return True
+
+    # Just digits alone (no prefix) — acceptable as long as other prefix not present
+    if re.search(r'(?<![0-9])0*' + digits + r'(?![0-9])', name_u):
         return True
 
     return False
