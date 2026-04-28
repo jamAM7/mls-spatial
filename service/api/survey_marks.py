@@ -1,6 +1,6 @@
 import requests
-from config import BASE
-from models import SurveyMark
+from service.config import BASE
+from service.models import SurveyMark
 from datetime import datetime
 
 SM_URL = f"{BASE}/SurveyMarkGDA2020_multiCRS/FeatureServer/0/query"

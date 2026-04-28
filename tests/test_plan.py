@@ -2,8 +2,8 @@
 # Mocked HTTP tests will be added in Phase 3.
 # Requires internet connection to run.
 
-from api.plan import get_plan_info
-from models import Plan
+from server.api.plan import get_plan_info
+from service.models import Plan
 
 KNOWN_PLAN = "DP1048011"
 UNKNOWN_PLAN = "DP999999999"

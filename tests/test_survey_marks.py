@@ -2,11 +2,11 @@
 # Mocked HTTP tests will be added in Phase 3.
 # Requires internet connection to run.
 
-from api.address import get_address_coordinates
-from api.survey_marks import get_survey_mark_info
-from models import SurveyMark
+from server.api.address import get_address_coordinates
+from server.api.survey_marks import get_survey_mark_info
+from service.models import SurveyMark
 from datetime import datetime
-from utils import expand_address
+from service.utils import expand_address
 
 ADDRESS = expand_address("483 GEORGE STREET SYDNEY")
 

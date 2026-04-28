@@ -2,8 +2,8 @@ import requests
 import re
 from datetime import datetime, timedelta, timezone
 
-from config import BASE
-from models import Plan
+from service.config import BASE
+from service.models import Plan
 
 
 BASE = "https://maps.six.nsw.gov.au/arcgis/rest/services/sixmaps/Boundaries/MapServer"

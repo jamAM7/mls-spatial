@@ -15,6 +15,7 @@ import os
 import re
 from pathlib import Path
 from datetime import date
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'clients'))
 
 SERVICE_URL = "http://localhost:8000"
 
@@ -124,8 +125,10 @@ def print_summary(geojson: dict, address: str):
 def save_drawn_png(geojson: dict, output_folder: Path, address: str, radius_m: int):
     """Generate and save the drawn PNG via draw.py."""
     try:
-        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        #sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'clients'))
         from draw import draw
+        
 
         output_path = str(output_folder / "search_plan.png")
         draw(geojson, output_path=output_path)

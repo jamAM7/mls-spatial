@@ -3,9 +3,9 @@ export.py — MLS Spatial Search Service
 Converts a SearchResult into a GeoJSON FeatureCollection.
 """
 
-from models import SearchResult, Lot, SurveyMark
+from service.models import SearchResult, Lot, SurveyMark
 from pathlib import Path
-from models import SearchResult, Lot, SurveyMark
+from service.models import SearchResult, Lot, SurveyMark
 import requests
 
 
@@ -183,7 +183,7 @@ def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m:
     Fetches a PNG raster image of the cadastral map from the CRE MapServer.
     map_radius_m controls the area shown — defaults to 500m regardless of search radius.
     """
-    from api.lot import get_lot_info
+    from service.api.lot import get_lot_info
 
     # Get lots for the larger map area
     map_lots = get_lot_info(result.address.easting, result.address.northing, map_radius_m)

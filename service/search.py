@@ -12,12 +12,12 @@
     # cre_map_image: Optional[Path] = None    # PNG saved from CRE MapServer export
 
 
-from models import SearchResult, Address, Lot, Plan, SurveyMark
-from utils import expand_address
-from api.address import get_address_coordinates
-from api.lot import get_lot_info
-from api.plan import get_plan_info
-from api.survey_marks import get_survey_mark_info
+from service.models import SearchResult, Address, Lot, Plan, SurveyMark
+from service.utils import expand_address
+from service.api.address import get_address_coordinates
+from service.api.lot import get_lot_info
+from service.api.plan import get_plan_info
+from service.api.survey_marks import get_survey_mark_info
 
 
 

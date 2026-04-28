@@ -1,84 +1,83 @@
-# py-spatialservices-starter
+# MLS Spatial Search
 
-A Python console app for querying NSW Spatial Services APIs to retrieve 
-address, lot, and survey mark information.
+NSW cadastral search tool — queries Spatial Services APIs to return lots, survey plans and survey marks for a given address. Generates cadastral drawings, CRE map images and downloads plan documents from Google Drive.
 
 ## Requirements
 - Python 3.x
+- `credentials.json` — Google OAuth credentials (provided separately, never committed to git)
+- `token.json` — created automatically on first run after authenticating with Google
 
 ## Setup
 
 1. Clone the repository
 ```
-git clone https://github.com/jamAM7/py-spatialservices-starter.git
+git clone https://github.com/jamAM7/mls-spatial.git
+cd mls-spatial
 ```
 
-2. Create and activate a virtual environment
-```
-python -m venv venv
-```
+2. Place `credentials.json` and `token.json` in the project root (obtain from project administrator)
+
+3. Create and activate a virtual environment
+
 Windows:
 ```
+python -m venv venv
 venv\Scripts\activate
 ```
 Mac/Linux:
 ```
+python -m venv venv
 source venv/bin/activate
 ```
 
-3. Install dependencies
+4. Install dependencies
 ```
 pip install -r requirements.txt
 ```
 
 ## Usage
 
-Run the main script:
+Run the console app:
 ```
-python spatialsearch.py
-```
-
-Enter a full address when prompted, for example:
-```
-1 PACIFIC HIGHWAY NORTH SYDNEY
+python console/run.py
 ```
 
-The tool will return:
-- Address coordinates
-- Lot and plan number
-- Nearby survey marks within 500m
+Enter a full NSW address when prompted:
+```
+483 GEORGE STREET SYDNEY
+```
 
-Enter 'x' to exit.
+Enter a search radius in metres (default 200m), then choose output:
+```
+1. Drawn PNG only           (~15 seconds)
+2. CRE map only             (~20 seconds)
+3. Full output              (~3 minutes - includes plan downloads)
+4. Drawn PNG + CRE map      (~30 seconds)
+```
+
+Results are saved to `output/{address}-{date}/` containing:
+- `search_result.geojson` — full GeoJSON FeatureCollection
+- `summary.json` — key search result fields
+- `search_plan.png` — colour coded cadastral drawing (options 1, 3, 4)
+- `cre_map.png` — CRE raster map image (options 2, 3, 4)
+- `plans/` — downloaded plan PDFs from Google Drive (option 3)
+
+## Running the FastAPI Service (optional)
+
+For programmatic access or the AutoCAD add-in:
+```
+uvicorn service.server:app --port 8000
+```
+
+Interactive API documentation: `http://localhost:8000/docs`
+
+### Endpoints
+- `GET /health` — confirms the service is running
+- `GET /search?address={address}&radius_m={radius_m}` — returns GeoJSON FeatureCollection
+- `GET /cre_map?address={address}&radius_m={radius_m}` — returns CRE map PNG
+- `GET /plan/{plan_label}` — returns plan metadata e.g. `/plan/DP574558`
 
 ## Data Sources
 - NSW Spatial Services: https://portal.spatial.nsw.gov.au
-
-
-## Running the Service
-
-### Navigate to the project directory and activate the virtual environment:
-
-cd path/to/pyconsole
-
-venv\Scripts\activate
-
-### Start the FastAPI server:
-
-uvicorn server:app --reload --port 8000
-
-The service will be available at `http://localhost:8000`
-
-Interactive API documentation is available at `http://localhost:8000/docs`
-
-The server runs until you press `Ctrl+C`. Use `--reload` during development 
-to automatically restart when code changes are saved.
-
-Example search:
-
-http://localhost:8000/search?address=483 GEORGE STREET SYDNEY&radius_m=150
-
-## Endpoints
-
-- `GET /health` — confirms the service is running
-- `GET /search?address={address}&radius_m={radius_m}` — returns GeoJSON FeatureCollection for an address (default radius 200m)
-- `GET /plan/{plan_label}` — returns metadata for a single plan e.g. `/plan/DP574558`
+- NSW SIX Maps: https://maps.six.nsw.gov.au
+- Google Drive: plan PDF storage (requires credentials.json)

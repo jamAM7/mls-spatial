@@ -2,10 +2,10 @@
 # Mocked HTTP tests will be added in Phase 3.
 # Requires internet connection to run.
 
-from api.address import get_address_coordinates
-from api.lot import get_lot_info
-from models import Lot
-from utils import expand_address
+from server.api.address import get_address_coordinates
+from server.api.lot import get_lot_info
+from service.models import Lot
+from service.utils import expand_address
 
 ADDRESS = expand_address("483 GEORGE STREET SYDNEY")
 

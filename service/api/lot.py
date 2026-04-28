@@ -1,6 +1,6 @@
 import requests
-from config import BASE
-from models import Lot
+from service.config import BASE
+from service.models import Lot
 
 LOT_URL = f"{BASE}/NSW_Land_Parcel_Property_Theme_multiCRS/FeatureServer/8/query"
 

@@ -14,9 +14,9 @@ from dataclasses import asdict
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse, FileResponse
 
-from search import search
-from export import to_geojson, fetch_cre_map_image
-from api.plan import get_plan_info
+from service.search import search
+from service.export import to_geojson, fetch_cre_map_image
+from service.api.plan import get_plan_info
 
 app = FastAPI(
     title="MLS Spatial Search Service",

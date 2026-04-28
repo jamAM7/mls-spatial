@@ -1,6 +1,6 @@
 import requests
-from config import BASE
-from models import Address
+from service.config import BASE
+from service.models import Address
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 ADDR_URL = "https://portal.spatial.nsw.gov.au/server/rest/services/NSW_Geocoded_Addressing_Theme_multiCRS/MapServer/1/query"
