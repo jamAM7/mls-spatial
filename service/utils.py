@@ -1,4 +1,6 @@
-NSW_STREET_ABBREVIATIONS = {
+import re
+
+_NSW_STREET_ABBREVIATIONS = {
     "ST":   "STREET",
     "RD":   "ROAD",
     "AVE":  "AVENUE",
@@ -23,16 +25,36 @@ NSW_STREET_ABBREVIATIONS = {
     "BVD":  "BOULEVARD",
 }
 
+_AUSTRALIAN_STATES = {"NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"}
 
-def expand_address(address: str) -> str:
-    """
-    Expands abbreviated street types in an NSW address.
-    e.g. '1 PITT ST SYDNEY' -> '1 PITT STREET SYDNEY'
-    """
+
+def _expand_address(address: str) -> str:
+    """Expands abbreviated street types. Private — call sanitise_address() instead."""
     words = address.upper().split()
-    expanded = []
+    return " ".join(_NSW_STREET_ABBREVIATIONS.get(w, w) for w in words)
 
-    for word in words:
-        expanded.append(NSW_STREET_ABBREVIATIONS.get(word, word))
 
-    return " ".join(expanded)
+def sanitise_address(address: str) -> str:
+    """
+    Cleans and normalises a user-supplied NSW address string.
+    Handles commas, state abbreviations, postcodes and street abbreviations.
+    e.g. '87 Bunarba Rd, Gymea Bay NSW 2227' -> '87 BUNARBA ROAD GYMEA BAY'
+    """
+    # Uppercase
+    address = address.upper()
+
+    # Strip commas
+    address = address.replace(",", " ")
+
+    # Strip trailing 4-digit postcode
+    address = re.sub(r'\b\d{4}\b\s*$', '', address)
+
+    # Strip trailing state abbreviations
+    pattern = r'\b(' + '|'.join(_AUSTRALIAN_STATES) + r')\b\s*$'
+    address = re.sub(pattern, '', address)
+
+    # Normalise whitespace
+    address = ' '.join(address.split())
+
+    # Expand street abbreviations
+    return _expand_address(address)
