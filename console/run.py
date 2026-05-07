@@ -112,6 +112,8 @@ def run_search(address: str, radius_m: int, datum: str):
     with open(output_folder / "search_result.geojson", "w") as f:
         json.dump(geojson, f, indent=2)
 
+    crs_label = f"{result.datum} MGA Zone {result.mga_zone} (EPSG:{result.epsg})"
+    
     summary = {
         "address_input":    result.address.input_string,
         "address_resolved": result.address.resolved_string,
@@ -121,6 +123,7 @@ def run_search(address: str, radius_m: int, datum: str):
         "county":           result.address.county,
         "datum":            result.datum,
         "epsg":             result.epsg,
+        "coordinate_system": crs_label,
         "search_radius_m":  result.search_radius_m,
         "subject_lot":      f"{result.subject_lot.lot_number}//{result.subject_lot.plan_label}" if result.subject_lot else None,
         "lot_count":        len(result.nearby_lots),
