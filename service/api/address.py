@@ -33,7 +33,7 @@ ADMIN_LAYERS = {
     "county": (11, "countyname"),
 }
 
-def _get_admin_boundaries(easting: float, northing: float) -> dict:
+def _get_admin_boundaries(easting: float, northing: float, inSR: int = 7856) -> dict:
     result = {"suburb": None, "lga": None, "parish": None, "county": None}
 
     def fetch(key, layer_id, field_name):
@@ -41,7 +41,7 @@ def _get_admin_boundaries(easting: float, northing: float) -> dict:
         params = {
             "geometry":       f"{easting},{northing}",
             "geometryType":   "esriGeometryPoint",
-            "inSR":           "7856",
+            "inSR":           str(inSR),
             "spatialRel":     "esriSpatialRelIntersects",
             "outFields":      field_name,
             "returnGeometry": False,
@@ -66,8 +66,8 @@ def _get_admin_boundaries(easting: float, northing: float) -> dict:
     return result
 
 
-def get_address_coordinates(address_string: str) -> Address | None:
-    feature_mga = _query_address(address_string, "7856")
+def get_address_coordinates(address_string: str, out_sr: int = 7856) -> Address | None:
+    feature_mga = _query_address(address_string, str(out_sr))
     if not feature_mga:
         return None
 
@@ -78,7 +78,7 @@ def get_address_coordinates(address_string: str) -> Address | None:
     geom_geo = feature_geo["geometry"] if feature_geo else None
 
     # Get admin boundaries
-    admin = _get_admin_boundaries(geom_mga["x"], geom_mga["y"])
+    admin = _get_admin_boundaries(geom_mga["x"], geom_mga["y"], inSR=out_sr)
 
     return Address(
         input_string    = address_string,

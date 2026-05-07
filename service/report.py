@@ -88,7 +88,7 @@ def generate_report(output_folder: Path) -> Path:
     table = Table(cover_data, colWidths=[80 * mm, 90 * mm])
     table.setStyle(
         TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f3a5f")),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4c8fed")),
             ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
             ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
             ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),

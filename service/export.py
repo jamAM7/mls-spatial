@@ -150,7 +150,7 @@ def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m:
     url = "https://maps.six.nsw.gov.au/arcgis/rest/services/sixmaps/CRE/MapServer/export"
     params = {
         "bbox":   f"{xmin},{ymin},{xmax},{ymax}",
-        "bboxSR": "7856",
+        "bboxSR": str(result.epsg),
         "size":   "2400,1800",
         "format": "png",
         "f":      "image",

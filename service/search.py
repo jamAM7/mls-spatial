@@ -16,20 +16,39 @@ from service.api.survey_marks import get_survey_mark_info
 def search(address_input: str, radius_m: int, datum: str = "GDA2020") -> SearchResult | None:
     # Resolve address
     address_input = sanitise_address(address_input)
-    address = get_address_coordinates(address_input )
-    if not address:
+
+    # Pass 1 — WGS84 only, just to get longitude for zone detection
+    address_geo = get_address_coordinates(address_input, out_sr=4326)
+    if not address_geo:
         return None
-    
-    # Get mga zone from lognitude
-    zone = mga_zone_from_longitude(address.longitude)
-    epsg = epsg_from_mga_zone(zone)
 
-    zone = mga_zone_from_longitude(address.longitude)
-
+    # Derive zone and EPSG from real longitude
+    zone = mga_zone_from_longitude(address_geo.longitude)
     try:
         epsg = EPSG_CODES[(datum, zone)]
     except KeyError:
         raise ValueError(f"Unsupported datum/zone combination: {datum}, {zone}")
+
+    # Pass 2 — correct projected coordinates + admin boundaries
+    address = get_address_coordinates(address_input, out_sr=epsg)
+    if not address:
+        return None
+    # address = get_address_coordinates(address_input )
+    # if not address:
+    #     return None
+    
+    # print(str(address.easting) + " and " + str(address.northing))
+    
+    # Get mga zone from lognitude
+    # zone = mga_zone_from_longitude(address.longitude)
+    # epsg = epsg_from_mga_zone(zone)
+
+    # zone = mga_zone_from_longitude(address.longitude)
+
+    # try:
+    #     epsg = EPSG_CODES[(datum, zone)]
+    # except KeyError:
+    #     raise ValueError(f"Unsupported datum/zone combination: {datum}, {zone}")
 
 
     # Get subject lot — tight query at exact point
