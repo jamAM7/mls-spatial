@@ -6,20 +6,20 @@ from datetime import datetime
 SM_URL = f"{BASE}/SurveyMarkGDA2020_multiCRS/FeatureServer/0/query"
 
 
-def get_survey_mark_info(x: float, y: float, distance: int = 200) -> list[SurveyMark] | None:
+def get_survey_mark_info(x: float, y: float, epsg: int, distance: int = 200) -> list[SurveyMark] | None:
     """
     Spatial query — returns all survey marks within distance metres of the given point.
     Returns list[SurveyMark] or None if nothing found.
     """
 
     params = {
-        "geometry":     f'{{"x": {x}, "y": {y}, "spatialReference": {{"wkid": 7856}}}}',
+        "geometry":     f'{{"x": {x}, "y": {y}, "spatialReference": {{"wkid": {epsg}}}}}',
         "geometryType": "esriGeometryPoint",
         "spatialRel":   "esriSpatialRelIntersects",
         "distance":     distance,
         "units":        "esriSRUnit_Meter",
-        "inSR":         "7856",
-        "outSR":        "7856",
+        "inSR":         str(epsg),
+        "outSR":        str(epsg),
         "outFields":    "*",
         "returnGeometry": "true",
         "f":            "json"

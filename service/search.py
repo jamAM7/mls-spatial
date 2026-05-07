@@ -4,7 +4,8 @@
 
 
 from service.models import SearchResult, Address, Lot, Plan, SurveyMark
-from service.utils import sanitise_address
+from service.utils import sanitise_address, epsg_from_mga_zone, mga_zone_from_longitude
+from service.config import EPSG_CODES
 from service.api.address import get_address_coordinates
 from service.api.lot import get_lot_info
 from service.api.plan import get_plan_info
@@ -12,19 +13,31 @@ from service.api.survey_marks import get_survey_mark_info
 
 
 
-def search(address_input: str, radius_m: int) -> SearchResult | None:
+def search(address_input: str, radius_m: int, datum: str = "GDA2020") -> SearchResult | None:
     # Resolve address
     address_input = sanitise_address(address_input)
     address = get_address_coordinates(address_input )
     if not address:
         return None
+    
+    # Get mga zone from lognitude
+    zone = mga_zone_from_longitude(address.longitude)
+    epsg = epsg_from_mga_zone(zone)
+
+    zone = mga_zone_from_longitude(address.longitude)
+
+    try:
+        epsg = EPSG_CODES[(datum, zone)]
+    except KeyError:
+        raise ValueError(f"Unsupported datum/zone combination: {datum}, {zone}")
+
 
     # Get subject lot — tight query at exact point
-    subject_candidates = get_lot_info(address.easting, address.northing, distance=1)
+    subject_candidates = get_lot_info(address.easting, address.northing, epsg, distance=1)
     subject_lot = subject_candidates[0] if subject_candidates else None
 
     # Get all nearby lots
-    lots = get_lot_info(address.easting, address.northing, radius_m) or []
+    lots = get_lot_info(address.easting, address.northing, epsg, radius_m) or []
 
     # Mark subject lot
     if subject_lot:
@@ -50,7 +63,9 @@ def search(address_input: str, radius_m: int) -> SearchResult | None:
 
 
     # Get survey marks
-    survey_marks = get_survey_mark_info(address.easting, address.northing, radius_m) or []
+    survey_marks = get_survey_mark_info(address.easting, address.northing, epsg, radius_m) or []
+
+    
 
     return SearchResult(
         address         = address,
@@ -60,6 +75,8 @@ def search(address_input: str, radius_m: int) -> SearchResult | None:
         survey_marks    = survey_marks,
         search_radius_m = radius_m,
         cre_map_image   = None,
+        epsg = epsg,
+        datum = datum
     )
 
 

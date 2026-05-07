@@ -36,8 +36,8 @@ class Address:
     resolved_string: str            # normalised form e.g. "1 PIT STREET SYDNEY"
     longitude: float                # WGS84
     latitude: float                 # WGS84
-    easting: float                  # GDA2020 MGA56
-    northing: float                 # GDA2020 MGA56
+    easting: float                  # GDA2020 MGA (zone varies)
+    northing: float                 # GDA2020 MGA (zone varies)
 
     # From [ADMIN] — administrative boundaries (spatial query at address point)
     suburb: Optional[str] = None    # e.g. "MIRANDA"
@@ -229,4 +229,9 @@ class SearchResult:
     plans: list[Plan]                       # unique plans referenced by nearby_lots
     survey_marks: list[SurveyMark]          # all marks within search_radius_m
     search_radius_m: int
+
+    epsg: int
+    datum: str
+    
     cre_map_image: Optional[Path] = None    # PNG saved from CRE MapServer export
+    

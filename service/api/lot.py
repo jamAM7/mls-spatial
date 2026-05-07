@@ -42,19 +42,19 @@ def _parse_geometry(rings: list) -> list:
     return [[coord[0], coord[1]] for coord in rings[0]]
 
 
-def get_lot_info(x: float, y: float, distance: int = 200) -> list[Lot] | None:
+def get_lot_info(x: float, y: float, epsg: int, distance: int = 200) -> list[Lot] | None:
     all_features = []
     offset = 0
 
     while True:
         params = {
-            "geometry":       f'{{"x": {x}, "y": {y}, "spatialReference": {{"wkid": 7856}}}}',
+            "geometry":       f'{{"x": {x}, "y": {y}, "spatialReference": {{"wkid": {epsg}}}}}',
             "geometryType":   "esriGeometryPoint",
             "spatialRel":     "esriSpatialRelIntersects",
             "distance":       distance,
             "units":          "esriSRUnit_Meter",
-            "inSR":           "7856",
-            "outSR":          "7856",
+            "inSR":           str(epsg),
+            "outSR":          str(epsg),
             "outFields":      "*",
             "returnGeometry": True,
             "resultOffset":   offset,        # ← pagination start

@@ -58,3 +58,22 @@ def sanitise_address(address: str) -> str:
 
     # Expand street abbreviations
     return _expand_address(address)
+
+
+
+def mga_zone_from_longitude(longitude: float) -> int:
+    if longitude < 144:
+        return 54
+    elif longitude < 150:
+        return 55
+    else:
+        return 56
+
+
+def epsg_from_mga_zone(zone: int, datum: str = "GDA2020") -> int:
+    if datum == "GDA2020":
+        return 7850 + zone   # 7854, 7855, 7856
+    elif datum == "GDA94":
+        return 28300 + zone  # 28354, 28355, 28356
+    else:
+        raise ValueError(f"Unsupported datum: {datum}")

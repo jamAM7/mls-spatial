@@ -109,7 +109,7 @@ def to_geojson(result: SearchResult) -> dict:
 
 
 
-def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m: int = 500) -> Path | None:
+def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m: int = 500, output_path: str = "cre_map.png") -> Path | None:
     """
     Fetches a PNG raster image of the cadastral map from the CRE MapServer.
     map_radius_m controls the area shown — defaults to 500m regardless of search radius.
@@ -117,7 +117,7 @@ def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m:
     from service.api.lot import get_lot_info
 
     # Get lots for the larger map area
-    map_lots = get_lot_info(result.address.easting, result.address.northing, map_radius_m)
+    map_lots = get_lot_info(result.address.easting, result.address.northing, result.epsg, map_radius_m)
     if not map_lots:
         return None
 
@@ -163,5 +163,7 @@ def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m:
     output_folder.mkdir(parents=True, exist_ok=True)
     image_path = output_folder / "cre_map.png"
     image_path.write_bytes(response.content)
+
+    print(f"Saved to {output_path}")
 
     return image_path

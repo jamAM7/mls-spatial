@@ -79,8 +79,16 @@ def get_drive_service():
     On first run, opens a browser window to authenticate.
     """
     creds: Optional[Credentials] = None
-    token_path = Path("token.json")
-    creds_path = Path("credentials.json")
+    # # token_path = Path("token.json")
+    # # creds_path = Path("credentials.json")
+    # token_path = Path("./token.json")
+    # creds_path = Path("./credentials.json")
+
+    ROOT = Path(__file__).resolve().parent.parent
+
+    token_path = ROOT / "token.json"
+    creds_path = ROOT / "credentials.json"
+    
 
     if token_path.exists():
         creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
