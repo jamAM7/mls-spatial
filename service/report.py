@@ -70,6 +70,8 @@ def generate_report(output_folder: Path) -> Path:
     story.append(Paragraph("Proposal Search Report", HEADER_STYLE))
     story.append(Spacer(1, 10))
 
+    crs_label = f'{summary.get("datum")} MGA Zone {summary.get("mga_zone")} (EPSG:{summary.get("epsg")})'
+
     cover_data = [
         ["Address", summary["address_resolved"]],
         ["Suburb", safe(summary.get("suburb"))],
@@ -78,6 +80,7 @@ def generate_report(output_folder: Path) -> Path:
         ["County", safe(summary.get("county"))],
         ["Subject Lot", safe(summary.get("subject_lot"))],
         ["Search Radius", f'{summary["search_radius_m"]} m'],
+        ["Coordinate System", crs_label], 
         ["Lots Found", summary["lot_count"]],
         ["Plans Found", summary["plan_count"]],
         ["Survey Marks", summary["mark_count"]],
@@ -118,7 +121,7 @@ def generate_report(output_folder: Path) -> Path:
     story.append(Spacer(1, 6))
     story.append(
         Paragraph(
-            "Source: NSW SIX Maps CRE MapServer. Coordinate system: GDA2020 MGA.",
+            f"Source: NSW SIX Maps CRE MapServer. Coordinate system: {crs_label}.",
             styles["Normal"],
         )
     )
@@ -196,10 +199,16 @@ def generate_report(output_folder: Path) -> Path:
     # ─────────────────────────────────────────────────────────────────────
     story.append(Paragraph("SURVEY MARKS", HEADER_STYLE))
 
+    zone = summary.get("mga_zone", 56)
+
     mark_headers = [
         "Mark No", "Type", "Status", "Symbol",
-        "Class", "AHD Height", "Easting", "Northing"
+        "Class", "AHD Height", "MGA Zone", f"MGA{zone} Easting", f"MGA{zone} Northing"
     ]
+    # mark_headers = [
+    #     "Mark No", "Type", "Status", "Symbol",
+    #     "Class", "AHD Height", "Easting", "Northing"
+    # ]
 
     mark_rows = [mark_headers]
 
@@ -216,6 +225,7 @@ def generate_report(output_folder: Path) -> Path:
             p.get("mark_symbol_label"),
             p.get("gda_class"),
             p.get("ahd_height_label"),
+            p.get("mga_zone"), # This is a test
             p.get("mga_easting_label"),
             p.get("mga_northing_label"),
         ])

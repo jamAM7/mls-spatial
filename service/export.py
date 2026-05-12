@@ -5,25 +5,18 @@ Converts a SearchResult into a GeoJSON FeatureCollection.
 
 from service.models import SearchResult, Lot, SurveyMark
 from pathlib import Path
-from service.models import SearchResult, Lot, SurveyMark
 import requests
 
 
 def to_geojson(result: SearchResult) -> dict:
-    """
-    Converts a SearchResult into a GeoJSON FeatureCollection.
-    Returns a dict ready to be serialised to JSON.
-    """
-
-    # Build plan lookup by plan_label for enriching lot features
     plan_lookup = {plan.plan_label: plan for plan in result.plans}
+    crs_label = f"{result.datum} MGA Zone {result.mga_zone} (EPSG:{result.epsg})"
 
     features = []
 
-    # Add lot features
     for lot in result.nearby_lots:
         plan = plan_lookup.get(lot.plan_label)
-        feature = {
+        features.append({
             "type": "Feature",
             "geometry": {
                 "type": "Polygon",
@@ -44,12 +37,10 @@ def to_geojson(result: SearchResult) -> dict:
                 "plan_lot_area":          lot.plan_lot_area,
                 "plan_lot_area_units":    lot.plan_lot_area_units,
             }
-        }
-        features.append(feature)
+        })
 
-    # Add survey mark features
     for mark in result.survey_marks:
-        feature = {
+        features.append({
             "type": "Feature",
             "geometry": {
                 "type": "Point",
@@ -67,46 +58,41 @@ def to_geojson(result: SearchResult) -> dict:
                 "ahd_height":                mark.ahd_height,
                 "ahd_height_label":          mark.ahd_height_label,
                 "ahd_class":                 mark.ahd_class,
+                "mga_zone":                  mark.mga_zone,
                 "mga_easting_label":         mark.mga_easting_label,
                 "mga_northing_label":        mark.mga_northing_label,
                 "retrieved_at":              mark.retrieved_at.isoformat() if mark.retrieved_at else None,
             }
-        }
-        features.append(feature)
+        })
 
-    # Build subject lot label
     subject_lot_label = None
     if result.subject_lot:
         subject_lot_label = f"{result.subject_lot.lot_number}//{result.subject_lot.plan_label}"
 
     return {
         "type": "FeatureCollection",
+        "crs": {
+            "type": "name",
+            "properties": {"name": f"urn:ogc:def:crs:EPSG::{result.epsg}"}
+        },
         "search": {
-            "address_input":    result.address.input_string,
-            "address_resolved": result.address.resolved_string,
-            "suburb":           result.address.suburb,
-            "lga":              result.address.lga,
-            "parish":           result.address.parish,
-            "county":           result.address.county,
-            "radius_m":         result.search_radius_m,
-            "subject_lot":      subject_lot_label,
-            "lot_count":        len(result.nearby_lots),
-            "plan_count":       len(result.plans),
-            "mark_count":       len(result.survey_marks),
+            "address_input":     result.address.input_string,
+            "address_resolved":  result.address.resolved_string,
+            "suburb":            result.address.suburb,
+            "lga":               result.address.lga,
+            "parish":            result.address.parish,
+            "county":            result.address.county,
+            "radius_m":          result.search_radius_m,
+            "subject_lot":       subject_lot_label,
+            "lot_count":         len(result.nearby_lots),
+            "plan_count":        len(result.plans),
+            "mark_count":        len(result.survey_marks),
+            "datum":             result.datum,
+            "mga_zone":          result.mga_zone,
+            "coordinate_system": crs_label,
         },
         "features": features
     }
-
-
-
-# TODO: fetch_cre_map_image(result: SearchResult) -> Path
-# Queries the CRE MapServer export endpoint with the bounding box of all lots
-# and saves the PNG map image locally.
-# Endpoint: https://maps.six.nsw.gov.au/arcgis/rest/services/sixmaps/CRE/MapServer/export
-# See SPEC.md for full details.
-# Required before server.py can return cre_map_image in the SearchResult.
-
-
 
 
 def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m: int = 500, output_path: str = "cre_map.png") -> Path | None:
@@ -114,39 +100,15 @@ def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m:
     Fetches a PNG raster image of the cadastral map from the CRE MapServer.
     map_radius_m controls the area shown — defaults to 500m regardless of search radius.
     """
-    from service.api.lot import get_lot_info
+    cx = result.address.easting
+    cy = result.address.northing
+    pad = map_radius_m * 1.2
 
-    # Get lots for the larger map area
-    map_lots = get_lot_info(result.address.easting, result.address.northing, result.epsg, map_radius_m)
-    if not map_lots:
-        return None
+    xmin = cx - pad
+    xmax = cx + pad
+    ymin = cy - pad
+    ymax = cy + pad
 
-    all_eastings = []
-    all_northings = []
-
-    for lot in map_lots:
-        for point in lot.geometry:
-            all_eastings.append(point[0])
-            all_northings.append(point[1])
-
-    if not all_eastings:
-        return None
-
-    # Calculate bounding box with 10% buffer
-    xmin = min(all_eastings)
-    xmax = max(all_eastings)
-    ymin = min(all_northings)
-    ymax = max(all_northings)
-
-    x_buffer = (xmax - xmin) * 0.1
-    y_buffer = (ymax - ymin) * 0.1
-
-    xmin -= x_buffer
-    xmax += x_buffer
-    ymin -= y_buffer
-    ymax += y_buffer
-
-    # Fetch PNG
     url = "https://maps.six.nsw.gov.au/arcgis/rest/services/sixmaps/CRE/MapServer/export"
     params = {
         "bbox":   f"{xmin},{ymin},{xmax},{ymax}",

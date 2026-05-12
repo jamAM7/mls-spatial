@@ -232,6 +232,7 @@ class SearchResult:
 
     epsg: int
     datum: str
+    mga_zone: int                           # 54, 55, or 56
     
     cre_map_image: Optional[Path] = None    # PNG saved from CRE MapServer export
     

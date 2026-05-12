@@ -80,7 +80,6 @@ def search(address_input: str, radius_m: int, datum: str = "GDA2020") -> SearchR
             if plan:
                 plans.append(plan)
 
-
     # Get survey marks
     survey_marks = get_survey_mark_info(address.easting, address.northing, epsg, radius_m) or []
 
@@ -95,7 +94,8 @@ def search(address_input: str, radius_m: int, datum: str = "GDA2020") -> SearchR
         search_radius_m = radius_m,
         cre_map_image   = None,
         epsg = epsg,
-        datum = datum
+        datum = datum,
+        mga_zone        = zone
     )
 
 
