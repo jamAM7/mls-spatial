@@ -5,6 +5,7 @@ Converts a SearchResult into a GeoJSON FeatureCollection.
 
 from service.models import SearchResult, Lot, SurveyMark
 from pathlib import Path
+from service.utils import lot_label
 import requests
 
 
@@ -55,6 +56,11 @@ def to_geojson(result: SearchResult) -> dict:
                 "gda_class":                 mark.gda_class,
                 "gda_date":                  str(mark.gda_date) if mark.gda_date else None,
                 "gda_pos_uncertainty_label": mark.gda_pos_uncertainty_label,
+                "gda_height_pos_uncertainty": mark.gda_height_pos_uncertainty,
+                "gda_loc_uncertainty_label": mark.gda_loc_uncertainty_label,
+                "gda_height_loc_uncertainty": mark.gda_height_loc_uncertainty,
+                "mga_csf_2020":             mark.mga_csf_2020,
+                "mga_csf_2020_label":       mark.mga_csf_2020_label,
                 "ahd_height":                mark.ahd_height,
                 "ahd_height_label":          mark.ahd_height_label,
                 "ahd_class":                 mark.ahd_class,
@@ -66,8 +72,9 @@ def to_geojson(result: SearchResult) -> dict:
         })
 
     subject_lot_label = None
-    if result.subject_lot:
-        subject_lot_label = f"{result.subject_lot.lot_number}//{result.subject_lot.plan_label}"
+    # if result.subject_lot:
+    #     subject_lot_label = f"{result.subject_lot.lot_number}//{result.subject_lot.plan_label}"
+    subject_lot_label = lot_label(result.subject_lot)
 
     return {
         "type": "FeatureCollection",
@@ -83,6 +90,7 @@ def to_geojson(result: SearchResult) -> dict:
             "parish":            result.address.parish,
             "county":            result.address.county,
             "radius_m":          result.search_radius_m,
+            "marks_radius_m":    result.marks_radius_m,
             "subject_lot":       subject_lot_label,
             "lot_count":         len(result.nearby_lots),
             "plan_count":        len(result.plans),

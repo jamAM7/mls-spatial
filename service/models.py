@@ -227,8 +227,9 @@ class SearchResult:
     subject_lot: Lot                        # the lot at the searched address
     nearby_lots: list[Lot]                  # all lots within search_radius_m (includes subject_lot)
     plans: list[Plan]                       # unique plans referenced by nearby_lots
-    survey_marks: list[SurveyMark]          # all marks within search_radius_m
+    survey_marks: list[SurveyMark]          # all marks within marks_radius_m
     search_radius_m: int
+    marks_radius_m: int                     # radius used for survey marks (may differ from search_radius_m)
 
     epsg: int
     datum: str

@@ -1,4 +1,196 @@
-# MLS Spatial Search Service — Build Specification
+# MLS Spatial — Project Status
+
+*Last updated: June 2026*
+
+---
+
+## Open Bugs
+
+| # | Where | Issue |
+|---|---|---|
+| #1 | `server.py`, `search.py` | `marks_radius_m` param missing — marks always use same radius as lots |
+| #2 | `export.py` | GeoJSON mark output missing `gda_loc_uncertainty_label`, `mga_csf_2020`, `mga_csf_2020_label` |
+| #3 | `export.py:70`, `server.py:106`, `server.py:150`, `spatialsearch.py:43` | Subject lot label drops section number — `1//DP45424` instead of `1/A/DP45424` |
+
+### Other known issues
+- `search.py` — full-search pipeline not wired (no plan downloads, no SCIMS sketch download, no elevation calls)
+- `search.py` — all NSW API calls are synchronous (`requests`); needs async conversion (`httpx` + `asyncio`)
+- `search.py` — dead commented-out code lines 36–51, remove ----------------DONE
+- `server.py` — no `/full-search`, `/mark`, `/history` endpoints
+- `server.py` — `search()` called synchronously inside async FastAPI
+- `export.py` — `fetch_cre_map_image` uses `requests` (sync), has stray `print()`, `output_path` param unused
+- `export.py` — `search` block missing `search_mode`, `surface_level_ahd`, `marks_radius_m`
+- `spatialsearch.py` — missing `if __name__ == "__main__"` guard
+- `tests/test_survey_marks.py` — broken imports, no tests actually run
+- `report.py` — reads from flat `summary.json` + `search_result.geojson` files; needs to accept `SearchResult` directly and integrate into pipeline properly. Needs surveyor review for field accuracy.
+
+---
+
+## Design Rules
+
+- `server.py` — endpoint definitions only. No business logic, no API calls.
+- `api/` modules and `search.py` — no `print()` statements. Print only in CLI entry points or `__main__` blocks.
+- `models.py` — single source of truth for all dataclasses. No imports from other project files.
+- All NSW API calls use `httpx` (async). No `requests` anywhere in the service.
+- All tests use mocked HTTP (`pytest-httpx`). No live API calls in tests.
+- Search mode priority: `geometry` > `folio` > `address`. At least one must be supplied.
+- `marks_radius_m` defaults to `radius_m` if not supplied.
+- EPSG/zone derived from real WGS84 longitude (two-pass address resolution already implemented).
+- `[ELEV]` API requires Web Mercator (EPSG:3857) input — convert with `to_web_mercator()` in `utils.py`.
+- Fixture data for tests lives in `tests/fixtures/` as JSON files.
+
+---
+
+## System Structure
+
+```
+mls-spatial/
+├── service/
+│   ├── models.py           ✓ done — all dataclasses, single source of truth
+│   ├── config.py           ✓ done — constants, API base URLs, EPSG_CODES
+│   ├── utils.py            ✓ done — sanitise_address, zone/EPSG helpers
+│   │                               TODO: add to_web_mercator() for [ELEV] calls
+│   ├── server.py           ~ partial — /health, /search, /cre_map, /plan work
+│   │                               TODO: add marks_radius_m to /search
+│   │                               TODO: add /full-search, /mark, /mark/sketch, /history
+│   ├── search.py           ~ partial — main pipeline runs, plans fetched in parallel
+│   │                               TODO: marks_radius_m param
+│   │                               TODO: surface level calls (address + each mark)
+│   │                               TODO: folio and geometry search modes
+│   │                               TODO: convert to async (httpx)
+│   │                               TODO: clean dead commented code
+│   ├── export.py           ~ partial — GeoJSON output works
+│   │                               TODO: fix bug #2 (missing mark fields)
+│   │                               TODO: fix bug #3 (subject lot label)
+│   │                               TODO: add search_mode, surface_level_ahd, marks_radius_m to search block
+│   │                               TODO: convert fetch_cre_map_image to httpx, remove print()
+│   ├── history.py          ✗ not built — SQLite search history
+│   ├── report.py           ~ exists — generates PDF from summary.json + geojson files
+│   │                               TODO: refactor to accept SearchResult directly
+│   │                               TODO: surveyor review of field accuracy
+│   │                               TODO: add bearing/distance column to marks table
+│   └── api/
+│       ├── address.py      ~ partial — geocoding + admin boundaries work
+│       │                               TODO: add surface_level_ahd fetch ([ELEV])
+│       │                               TODO: convert to async
+│       ├── lot.py          ~ partial — spatial lot query works
+│       │                               TODO: add get_lot_by_folio() for folio search
+│       │                               TODO: convert to async
+│       ├── plan.py         ✓ works
+│       │                               TODO: convert to async
+│       └── survey_marks.py ~ partial — spatial mark query works
+│                                       TODO: add get_mark_by_reference() (attribute query)
+│                                       TODO: add download_sketch() for SCIMS PDFs
+│                                       TODO: add surface_level_ahd fetch per mark
+│                                       TODO: convert to async
+│
+├── clients/
+│   ├── draw.py             ~ exists — draws PNG from /search output. Needs surveyor review.
+│   └── SPEC.md             ✓ done
+│
+├── console/
+│   ├── run.py              ✓ done
+│   └── search_console.py   ✓ done
+│
+├── tests/
+│   ├── test_address.py     ✗ not written
+│   ├── test_lot.py         ✗ not written
+│   ├── test_plan.py        ✗ not written
+│   └── test_survey_marks.py ✗ broken imports, effectively empty
+│
+├── Dockerfile              ✗ not built
+├── docker-compose.yml      ✗ not built
+├── .github/workflows/
+│   └── test.yml            ✗ not built
+└── README.md               ✗ needs update
+```
+
+**Downstream projects (not yet started):**
+```
+mls-infotrack/              ✗ not started — InfoTrack API wrapper (Week 2)
+MLSSurveyManager/           ~ exists (C#) — InfoTrack integration to be added (Week 3)
+mls-assistant/              ~ exists (HTML) — RAG upgrade (Week 4)
+mls-spatial-viewer/         ✗ not started — Leaflet web map (Week 5)
+AutoCAD add-in/             ✗ not started — C# Civil 3D add-in (Week 6)
+```
+
+---
+
+## Build Queue
+
+Fix bugs first, then new features, then hygiene. Rough order:
+
+**Bug fixes (do first)**
+1. Bug #3 — fix subject lot label (4-line find/replace in export.py, server.py, spatialsearch.py)
+2. Bug #2 — add missing mark fields to export.py
+3. Bug #1 — add `marks_radius_m` param through server.py → search.py
+
+**New features — service layer**
+4. `utils.py` — add `to_web_mercator()`
+5. `api/address.py` — add surface level AHD fetch at address point
+6. `api/survey_marks.py` — add surface level fetch per mark (parallel)
+7. `api/survey_marks.py` — add `get_mark_by_reference()` (single mark attribute query)
+8. `api/survey_marks.py` — add `download_sketch()` (SCIMS PDF download)
+9. `api/lot.py` — add `get_lot_by_folio()`
+10. `search.py` — wire folio search mode
+11. `search.py` — wire surface level calls
+12. `service/history.py` — SQLite search history (new file)
+13. `server.py` — add `/mark/{type}/{number}` endpoint
+14. `server.py` — add `/mark/{type}/{number}/sketch` endpoint
+15. `server.py` — add `/full-search` endpoint
+16. `server.py` — add `/history` endpoint
+17. `export.py` — add search_mode, surface_level_ahd, marks_radius_m to search block
+18. `report.py` — refactor to accept SearchResult directly, add bearing/distance to marks
+
+**Engineering hygiene (can be done alongside features)**
+19. Convert all `api/` modules from `requests` to `httpx` (async)
+20. Rewrite all tests with mocked HTTP (`pytest-httpx`)
+21. Add `Dockerfile` + `docker-compose.yml`
+22. Add GitHub Actions `test.yml`
+23. Clean dead code from `search.py`
+24. Fix `spatialsearch.py` `__main__` guard
+25. Update README
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# OLD FROM MAY 
+# OLD FROM MAY
+# OLD FROM MAY
+
+
+
+# MLS Spatial Search Service — Build Specification - OLD from MAY
 
 **Project:** py-spatialservices-starter
 **Developer:** James Mitchell — Software Internship, Mitchell Land Surveyors Pty Ltd

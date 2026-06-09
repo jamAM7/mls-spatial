@@ -94,11 +94,12 @@ def print_summary(result):
     print(f"  Marks:   {len(result.survey_marks)}")
 
 
-def run_search(address: str, radius_m: int, datum: str):
+def run_search(address: str, radius_m: int, datum: str, marks_radius_m: int | None = None):
     choice = get_output_choice()
 
-    print(f"\nSearching '{address}' within {radius_m}m...")
-    result = search(address, radius_m, datum=datum)
+    marks_label = f"{marks_radius_m}m" if marks_radius_m is not None else f"{radius_m}m (default)"
+    print(f"\nSearching '{address}' within {radius_m}m (marks: {marks_label})...")
+    result = search(address, radius_m, datum=datum, marks_radius_m=marks_radius_m)
 
     if result is None:
         print("Address not found. Check the address and try again.")
@@ -125,6 +126,7 @@ def run_search(address: str, radius_m: int, datum: str):
         "epsg":             result.epsg,
         "coordinate_system": crs_label,
         "search_radius_m":  result.search_radius_m,
+        "marks_radius_m":   marks_radius_m,
         "subject_lot":      f"{result.subject_lot.lot_number}//{result.subject_lot.plan_label}" if result.subject_lot else None,
         "lot_count":        len(result.nearby_lots),
         "plan_count":       len(result.plans),
@@ -188,13 +190,20 @@ def main():
             print("Invalid radius — using 200m")
             radius_m = 200
 
+        try:
+            marks_input = input(f"Survey marks radius in metres [{radius_m}]: ").strip()
+            marks_radius_m = int(marks_input) if marks_input else None
+        except ValueError:
+            print(f"Invalid marks radius — using {radius_m}m")
+            marks_radius_m = None
+
         datum = input("Datum [GDA2020]: ").strip().upper() or "GDA2020"
 
         if datum not in ("GDA2020", "GDA94"):
             print("Invalid datum. Use GDA2020 or GDA94.")
             continue
 
-        run_search(address, radius_m, datum)
+        run_search(address, radius_m, datum, marks_radius_m)
         print()
 
 

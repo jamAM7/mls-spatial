@@ -77,3 +77,9 @@ def epsg_from_mga_zone(zone: int, datum: str = "GDA2020") -> int:
         return 28300 + zone  # 28354, 28355, 28356
     else:
         raise ValueError(f"Unsupported datum: {datum}")
+    
+
+def lot_label(lot) -> str:
+    if lot.section_number:
+        return f"{lot.lot_number}/{lot.section_number}/{lot.plan_label}"
+    return f"{lot.lot_number}/{lot.plan_label}"

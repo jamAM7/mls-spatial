@@ -84,8 +84,6 @@ def search(address_input: str, radius_m: int, datum: str = "GDA2020", marks_radi
     _marks_radius = marks_radius_m if marks_radius_m is not None else radius_m
     survey_marks = get_survey_mark_info(address.easting, address.northing, epsg, _marks_radius) or []
 
-    
-
     return SearchResult(
         address         = address,
         subject_lot     = subject_lot,
@@ -93,9 +91,10 @@ def search(address_input: str, radius_m: int, datum: str = "GDA2020", marks_radi
         plans           = plans,
         survey_marks    = survey_marks,
         search_radius_m = radius_m,
+        marks_radius_m  = _marks_radius,
         cre_map_image   = None,
-        epsg = epsg,
-        datum = datum,
+        epsg            = epsg,
+        datum           = datum,
         mga_zone        = zone
     )
 
