@@ -73,9 +73,20 @@ Interactive API documentation: `http://localhost:8000/docs`
 
 ### Endpoints
 - `GET /health` — confirms the service is running
-- `GET /search?address={address}&radius_m={radius_m}` — returns GeoJSON FeatureCollection
+- `GET /search?address={address}&radius_m={radius_m}&marks_radius_m={marks_radius_m}` — returns GeoJSON FeatureCollection
+- `GET /full-search?address={address}&radius_m={radius_m}&output_folder={path}` — full pipeline: search, CRE map, plan downloads, PDF report
 - `GET /cre_map?address={address}&radius_m={radius_m}` — returns CRE map PNG
 - `GET /plan/{plan_label}` — returns plan metadata e.g. `/plan/DP574558`
+- `GET /mark/{mark_type}/{mark_number}` — returns survey mark metadata e.g. `/mark/PM/12345`
+- `GET /mark/{mark_type}/{mark_number}/sketch` — returns mark sketch PDF
+
+## Testing
+
+```
+pytest tests/ -v
+```
+
+Tests use mocked HTTP via the `responses` library and require no internet connection. All NSW Spatial Services API calls are intercepted using fixture data in `tests/fixtures/`.
 
 ## Data Sources
 - NSW Spatial Services: https://portal.spatial.nsw.gov.au

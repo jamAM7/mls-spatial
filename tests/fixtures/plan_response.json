@@ -1,0 +1,19 @@
+{
+  "features": [
+    {
+      "attributes": {
+        "classsubtype": 1,
+        "plannumber": 999001,
+        "plannumbersuffix": null,
+        "issurveyed": 1,
+        "iscurrent": 1,
+        "hasstratum": 0,
+        "planpurpose": 1,
+        "planextentstatus": null,
+        "processstate": "Registered",
+        "registrationdate": 946684800000,
+        "surveydate": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "features": [
+    {
+      "attributes": {
+        "lotnumber": "87",
+        "planlabel": "DP999001",
+        "sectionnumber": "",
+        "plannumber": 999001,
+        "planoid": 10001,
+        "itslotid": 20001,
+        "cadid": 30001,
+        "controllingauthorityoid": null,
+        "classsubtype": 1,
+        "itstitlestatus": 1,
+        "stratumlevel": 0,
+        "hasstratum": 1,
+        "planlotarea": 601.5,
+        "planlotareaunits": "m2",
+        "createdate": 946684800000,
+        "modifieddate": 1609459200000
+      },
+      "geometry": {
+        "rings": [
+          [
+            [336100.0, 6234450.0],
+            [336200.0, 6234450.0],
+            [336200.0, 6234550.0],
+            [336100.0, 6234550.0],
+            [336100.0, 6234450.0]
+          ]
+        ]
+      }
+    },
+    {
+      "attributes": {
+        "lotnumber": "88",
+        "planlabel": "DP999001",
+        "sectionnumber": "",
+        "plannumber": 999001,
+        "planoid": 10001,
+        "itslotid": 20002,
+        "cadid": 30002,
+        "controllingauthorityoid": null,
+        "classsubtype": 1,
+        "itstitlestatus": 1,
+        "stratumlevel": 0,
+        "hasstratum": 1,
+        "planlotarea": 550.0,
+        "planlotareaunits": "m2",
+        "createdate": 946684800000,
+        "modifieddate": 1609459200000
+      },
+      "geometry": {
+        "rings": [
+          [
+            [336200.0, 6234450.0],
+            [336300.0, 6234450.0],
+            [336300.0, 6234550.0],
+            [336200.0, 6234550.0],
+            [336200.0, 6234450.0]
+          ]
+        ]
+      }
+    }
+  ],
+  "exceededTransferLimit": false
+}

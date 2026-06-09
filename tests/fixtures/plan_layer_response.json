@@ -1,0 +1,73 @@
+{
+  "fields": [
+    {
+      "name": "hasstratum",
+      "domain": {
+        "type": "codedValue",
+        "codedValues": [
+          {"code": 0, "name": "False"},
+          {"code": 1, "name": "True"}
+        ]
+      }
+    },
+    {
+      "name": "planpurpose",
+      "domain": {
+        "type": "codedValue",
+        "codedValues": [
+          {"code": 1, "name": "Subdivision"},
+          {"code": 2, "name": "Survey"},
+          {"code": 3, "name": "Strata"}
+        ]
+      }
+    },
+    {
+      "name": "planextentstatus",
+      "domain": null
+    }
+  ],
+  "types": [
+    {
+      "id": 1,
+      "name": "DP",
+      "domains": {
+        "issurveyed": {
+          "type": "codedValue",
+          "codedValues": [
+            {"code": 0, "name": "False"},
+            {"code": 1, "name": "True"},
+            {"code": 2, "name": "Unresearched"}
+          ]
+        },
+        "iscurrent": {
+          "type": "codedValue",
+          "codedValues": [
+            {"code": 0, "name": "False"},
+            {"code": 1, "name": "True"}
+          ]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "name": "SP",
+      "domains": {
+        "issurveyed": {
+          "type": "codedValue",
+          "codedValues": [
+            {"code": 0, "name": "False"},
+            {"code": 1, "name": "True"},
+            {"code": 2, "name": "Unresearched"}
+          ]
+        },
+        "iscurrent": {
+          "type": "codedValue",
+          "codedValues": [
+            {"code": 0, "name": "False"},
+            {"code": 1, "name": "True"}
+          ]
+        }
+      }
+    }
+  ]
+}
