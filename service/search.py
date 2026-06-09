@@ -13,7 +13,7 @@ from service.api.survey_marks import get_survey_mark_info
 
 
 
-def search(address_input: str, radius_m: int, datum: str = "GDA2020") -> SearchResult | None:
+def search(address_input: str, radius_m: int, datum: str = "GDA2020", marks_radius_m: int | None = None) -> SearchResult | None:
     # Resolve address
     address_input = sanitise_address(address_input)
 
@@ -80,8 +80,9 @@ def search(address_input: str, radius_m: int, datum: str = "GDA2020") -> SearchR
             if plan:
                 plans.append(plan)
 
-    # Get survey marks
-    survey_marks = get_survey_mark_info(address.easting, address.northing, epsg, radius_m) or []
+    # Get survey marks — use marks_radius_m if supplied, otherwise fall back to radius_m
+    _marks_radius = marks_radius_m if marks_radius_m is not None else radius_m
+    survey_marks = get_survey_mark_info(address.easting, address.northing, epsg, _marks_radius) or []
 
     
 
