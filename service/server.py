@@ -24,6 +24,8 @@ from service.drive import download_plans
 from service.report import generate_report
 from service.utils import lot_label
 
+from clients.draw import draw as draw_png
+
 def _asdict_json(obj) -> dict:
     """asdict() with date/datetime values converted to isoformat strings."""
     def _convert(v):
@@ -115,10 +117,11 @@ def full_search_endpoint(
     (folder / "search_result.geojson").write_text(json.dumps(geojson, indent=2))
 
     result.cre_map_image = fetch_cre_map_image(result, folder, map_radius_m=radius_m)
+    draw_png(geojson, output_path=str(folder / "search_plan.png"))
     result = download_plans(result, folder)
-    report_path = generate_report(folder)
 
     crs_label = f"{result.datum} MGA Zone {result.mga_zone} (EPSG:{result.epsg})"
+
     summary = {
         "address_input":     result.address.input_string,
         "address_resolved":  result.address.resolved_string,
@@ -135,9 +138,15 @@ def full_search_endpoint(
         "lot_count":         len(result.nearby_lots),
         "plan_count":        len(result.plans),
         "mark_count":        len(result.survey_marks),
-        "report_path":       str(report_path),
+        # "report_path":       str(report_path),
         "output_folder":     str(folder),
+        "mga_zone":          result.mga_zone,
+        "searched_at":       datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
+    (folder / "summary.json").write_text(json.dumps(summary, indent=2))
+    report_path = generate_report(folder)
+
+    summary["report_path"] = str(report_path)
     return JSONResponse(content=summary)
 
 

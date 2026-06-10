@@ -8,6 +8,18 @@ SM_URL      = f"{BASE}/SurveyMarkGDA2020_multiCRS/FeatureServer/0/query"
 SM_ATTR_URL = "https://portal.spatial.nsw.gov.au/server/rest/services/SurveyMarkGDA2020/MapServer/0/query"
 
 
+def _epoch_ms_to_date(ms):
+    if not ms:
+        return None
+    try:
+        return datetime.fromtimestamp(ms / 1000).date()
+    except (OSError, OverflowError, ValueError):
+        return None
+
+
+
+
+
 def _mark_from_feature(feature: dict) -> SurveyMark:
     attrs = feature["attributes"]
     geom  = feature.get("geometry") or {}
@@ -43,7 +55,8 @@ def _mark_from_feature(feature: dict) -> SurveyMark:
 
         # GDA2020 horizontal quality
         gda_class                 = attrs.get("gdaclass"),
-        gda_date                  = datetime.fromtimestamp(attrs["gdadate"] / 1000).date() if attrs.get("gdadate") is not None else None,
+        # gda_date                  = datetime.fromtimestamp(attrs["gdadate"] / 1000).date() if attrs.get("gdadate") is not None else None,
+        gda_date        = _epoch_ms_to_date(attrs.get("gdadate")),
         gda_source                = attrs.get("gdasource"),
         gda_source_type           = attrs.get("gdasourcetype"),
         gda_source_method         = attrs.get("gdasourcemethod"),
@@ -54,7 +67,8 @@ def _mark_from_feature(feature: dict) -> SurveyMark:
         ahd_height                = float(attrs.get("ahdheight_label")) if attrs.get("ahdheight_label") else None,
         ahd_height_label          = attrs.get("ahdheight_label"),
         ahd_class                 = attrs.get("ahdclass"),
-        ahd_date                  = datetime.fromtimestamp(attrs["ahddate"] / 1000).date() if attrs.get("ahddate") is not None else None,
+        # ahd_date                  = datetime.fromtimestamp(attrs["ahddate"] / 1000).date() if attrs.get("ahddate") is not None else None,
+        ahd_date        = _epoch_ms_to_date(attrs.get("ahddate")),
         ahd_source                = attrs.get("ahdsource"),
         ahd_source_type           = attrs.get("ahdsourcetype"),
         ahd_source_method         = attrs.get("ahdsourcemethod"),
@@ -68,7 +82,8 @@ def _mark_from_feature(feature: dict) -> SurveyMark:
         # GDA2020 ellipsoidal height
         gda_height                = attrs.get("gdaheight"),
         gda_height_label          = attrs.get("gdaheight_label"),
-        gda_height_date           = datetime.fromtimestamp(attrs["gdaheightdate"] / 1000).date() if attrs.get("gdaheightdate") is not None else None,
+        # gda_height_date           = datetime.fromtimestamp(attrs["gdaheightdate"] / 1000).date() if attrs.get("gdaheightdate") is not None else None,
+        gda_height_date = _epoch_ms_to_date(attrs.get("gdaheightdate")),
         gda_height_class          = attrs.get("gdaheightclass"),
         gda_height_order          = attrs.get("gdaheightorder"),
         gda_height_pos_uncertainty = attrs.get("gdaheightposuncertainty"),
