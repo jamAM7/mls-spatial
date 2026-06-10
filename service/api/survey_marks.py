@@ -1,11 +1,14 @@
 import requests
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from service.config import BASE
 from service.models import SurveyMark
+from service.utils import to_web_mercator
 from datetime import datetime
 
 SM_URL      = f"{BASE}/SurveyMarkGDA2020_multiCRS/FeatureServer/0/query"
 SM_ATTR_URL = "https://portal.spatial.nsw.gov.au/server/rest/services/SurveyMarkGDA2020/MapServer/0/query"
+ELEV_URL    = "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_5M_Elevation/ImageServer/identify"
 
 
 def _epoch_ms_to_date(ms):
@@ -17,7 +20,24 @@ def _epoch_ms_to_date(ms):
         return None
 
 
-
+def _fetch_surface_level(longitude: float, latitude: float) -> float | None:
+    """Fetch AHD surface level from NSW 5M Elevation DEM at a WGS84 point."""
+    x, y = to_web_mercator(longitude, latitude)
+    params = {
+        "geometry":     f"{x},{y}",
+        "geometryType": "esriGeometryPoint",
+        "inSR":         "3857",
+        "f":            "json",
+    }
+    try:
+        response = requests.get(ELEV_URL, params=params)
+        data = response.json()
+        value = data.get("value")
+        if value is None or value == "NoData":
+            return None
+        return round(float(value), 3)
+    except Exception:
+        return None
 
 
 def _mark_from_feature(feature: dict) -> SurveyMark:
@@ -55,8 +75,7 @@ def _mark_from_feature(feature: dict) -> SurveyMark:
 
         # GDA2020 horizontal quality
         gda_class                 = attrs.get("gdaclass"),
-        # gda_date                  = datetime.fromtimestamp(attrs["gdadate"] / 1000).date() if attrs.get("gdadate") is not None else None,
-        gda_date        = _epoch_ms_to_date(attrs.get("gdadate")),
+        gda_date                  = _epoch_ms_to_date(attrs.get("gdadate")),
         gda_source                = attrs.get("gdasource"),
         gda_source_type           = attrs.get("gdasourcetype"),
         gda_source_method         = attrs.get("gdasourcemethod"),
@@ -67,8 +86,7 @@ def _mark_from_feature(feature: dict) -> SurveyMark:
         ahd_height                = float(attrs.get("ahdheight_label")) if attrs.get("ahdheight_label") else None,
         ahd_height_label          = attrs.get("ahdheight_label"),
         ahd_class                 = attrs.get("ahdclass"),
-        # ahd_date                  = datetime.fromtimestamp(attrs["ahddate"] / 1000).date() if attrs.get("ahddate") is not None else None,
-        ahd_date        = _epoch_ms_to_date(attrs.get("ahddate")),
+        ahd_date                  = _epoch_ms_to_date(attrs.get("ahddate")),
         ahd_source                = attrs.get("ahdsource"),
         ahd_source_type           = attrs.get("ahdsourcetype"),
         ahd_source_method         = attrs.get("ahdsourcemethod"),
@@ -82,8 +100,7 @@ def _mark_from_feature(feature: dict) -> SurveyMark:
         # GDA2020 ellipsoidal height
         gda_height                = attrs.get("gdaheight"),
         gda_height_label          = attrs.get("gdaheight_label"),
-        # gda_height_date           = datetime.fromtimestamp(attrs["gdaheightdate"] / 1000).date() if attrs.get("gdaheightdate") is not None else None,
-        gda_height_date = _epoch_ms_to_date(attrs.get("gdaheightdate")),
+        gda_height_date           = _epoch_ms_to_date(attrs.get("gdaheightdate")),
         gda_height_class          = attrs.get("gdaheightclass"),
         gda_height_order          = attrs.get("gdaheightorder"),
         gda_height_pos_uncertainty = attrs.get("gdaheightposuncertainty"),
@@ -100,6 +117,7 @@ def _mark_from_feature(feature: dict) -> SurveyMark:
 def get_survey_mark_info(x: float, y: float, epsg: int, distance: int = 200) -> list[SurveyMark] | None:
     """
     Spatial query — returns all survey marks within distance metres of the given point.
+    Fetches surface level AHD from [ELEV] for each mark in parallel.
     Returns list[SurveyMark] or None if nothing found.
     """
     params = {
@@ -120,10 +138,26 @@ def get_survey_mark_info(x: float, y: float, epsg: int, distance: int = 200) -> 
     if not features:
         return None
 
-    return [_mark_from_feature(f) for f in features]
+    marks = [_mark_from_feature(f) for f in features]
+
+    # Fetch surface level for each mark in parallel
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {
+            executor.submit(_fetch_surface_level, m.longitude, m.latitude): m
+            for m in marks
+            if m.longitude is not None and m.latitude is not None
+        }
+        for future, mark in futures.items():
+            mark.surface_level_ahd = future.result()
+
+    return marks
 
 
 def get_mark_by_reference(mark_type: str, mark_number: str) -> SurveyMark | None:
+    """
+    Attribute query — fetches a single mark by type and number from [MARK_ATTR].
+    Also fetches surface level AHD for the returned mark.
+    """
     params = {
         "where":          f"marknumber={mark_number} AND marktype='{mark_type}'",
         "outFields":      "*",
@@ -137,9 +171,15 @@ def get_mark_by_reference(mark_type: str, mark_number: str) -> SurveyMark | None
     if not features:
         return None
 
-    return _mark_from_feature(features[0])
+    mark = _mark_from_feature(features[0])
+
+    if mark.longitude is not None and mark.latitude is not None:
+        mark.surface_level_ahd = _fetch_surface_level(mark.longitude, mark.latitude)
+
+    return mark
 
 
 def download_sketch(mark: SurveyMark, dest_folder: Path) -> Path | None:
     return None
+
 

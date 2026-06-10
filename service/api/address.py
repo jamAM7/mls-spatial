@@ -1,10 +1,13 @@
 import requests
 from service.config import BASE
 from service.models import Address
+from service.utils import to_web_mercator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 ADDR_URL = "https://portal.spatial.nsw.gov.au/server/rest/services/NSW_Geocoded_Addressing_Theme_multiCRS/MapServer/1/query"
 ADMIN_BASE = "https://portal.spatial.nsw.gov.au/server/rest/services/NSW_Administrative_Boundaries_Theme/FeatureServer"
+ELEV_URL = "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_5M_Elevation/ImageServer/identify"
+
 
 def _query_address(address_string: str, out_sr: str) -> dict | None:
     """Private helper — queries address API with given output spatial reference"""
@@ -32,6 +35,27 @@ ADMIN_LAYERS = {
     "parish": (5,  "parishname"),
     "county": (11, "countyname"),
 }
+
+
+def _fetch_surface_level(longitude: float, latitude: float) -> float | None:
+    """Fetch AHD surface level from NSW 5M Elevation DEM at a WGS84 point."""
+    x, y = to_web_mercator(longitude, latitude)
+    params = {
+        "geometry":     f"{x},{y}",
+        "geometryType": "esriGeometryPoint",
+        "inSR":         "3857",
+        "f":            "json",
+    }
+    try:
+        response = requests.get(ELEV_URL, params=params)
+        data = response.json()
+        value = data.get("value")
+        if value is None or value == "NoData":
+            return None
+        return round(float(value), 3)
+    except Exception:
+        return None
+
 
 def _get_admin_boundaries(easting: float, northing: float, inSR: int = 7856) -> dict:
     result = {"suburb": None, "lga": None, "parish": None, "county": None}
@@ -77,22 +101,32 @@ def get_address_coordinates(address_string: str, out_sr: int = 7856) -> Address 
     geom_mga = feature_mga["geometry"]
     geom_geo = feature_geo["geometry"] if feature_geo else None
 
-    # Get admin boundaries
-    admin = _get_admin_boundaries(geom_mga["x"], geom_mga["y"], inSR=out_sr)
+    longitude = geom_geo["x"] if geom_geo else None
+    latitude  = geom_geo["y"] if geom_geo else None
+
+    # Run admin boundaries and elevation concurrently
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        admin_future = executor.submit(
+            _get_admin_boundaries, geom_mga["x"], geom_mga["y"], inSR=out_sr
+        )
+        elev_future = executor.submit(
+            _fetch_surface_level, longitude, latitude
+        ) if longitude and latitude else None
+
+        admin = admin_future.result()
+        surface_level_ahd = elev_future.result() if elev_future else None
 
     return Address(
-        input_string    = address_string,
-        resolved_string = attrs.get("address") or address_string,
-        easting         = geom_mga["x"],
-        northing        = geom_mga["y"],
-        longitude       = geom_geo["x"] if geom_geo else None,
-        latitude        = geom_geo["y"] if geom_geo else None,
-        suburb          = admin["suburb"],
-        lga             = admin["lga"],
-        parish          = admin["parish"],
-        county          = admin["county"],
+        input_string      = address_string,
+        resolved_string   = attrs.get("address") or address_string,
+        easting           = geom_mga["x"],
+        northing          = geom_mga["y"],
+        longitude         = longitude,
+        latitude          = latitude,
+        suburb            = admin["suburb"],
+        lga               = admin["lga"],
+        parish            = admin["parish"],
+        county            = admin["county"],
+        surface_level_ahd = surface_level_ahd,
     )
-
-
-
 

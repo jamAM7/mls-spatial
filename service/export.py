@@ -48,33 +48,29 @@ def to_geojson(result: SearchResult) -> dict:
                 "coordinates": [mark.easting, mark.northing]
             },
             "properties": {
-                "feature_type":              "survey_mark",
-                "mark_number":               mark.mark_number,
-                "mark_type":                 mark.mark_type,
-                "mark_status":               mark.mark_status,
-                "mark_symbol_label":         mark.mark_symbol_label,
-                "gda_class":                 mark.gda_class,
-                "gda_date":                  str(mark.gda_date) if mark.gda_date else None,
-                "gda_pos_uncertainty_label": mark.gda_pos_uncertainty_label,
+                "feature_type":               "survey_mark",
+                "mark_number":                mark.mark_number,
+                "mark_type":                  mark.mark_type,
+                "mark_status":                mark.mark_status,
+                "mark_symbol_label":          mark.mark_symbol_label,
+                "gda_class":                  mark.gda_class,
+                "gda_date":                   str(mark.gda_date) if mark.gda_date else None,
+                "gda_pos_uncertainty_label":  mark.gda_pos_uncertainty_label,
                 "gda_height_pos_uncertainty": mark.gda_height_pos_uncertainty,
-                "gda_loc_uncertainty_label": mark.gda_loc_uncertainty_label,
+                "gda_loc_uncertainty_label":  mark.gda_loc_uncertainty_label,
                 "gda_height_loc_uncertainty": mark.gda_height_loc_uncertainty,
-                "mga_csf_2020":             mark.mga_csf_2020,
-                "mga_csf_2020_label":       mark.mga_csf_2020_label,
-                "ahd_height":                mark.ahd_height,
-                "ahd_height_label":          mark.ahd_height_label,
-                "ahd_class":                 mark.ahd_class,
-                "mga_zone":                  mark.mga_zone,
-                "mga_easting_label":         mark.mga_easting_label,
-                "mga_northing_label":        mark.mga_northing_label,
-                "retrieved_at":              mark.retrieved_at.isoformat() if mark.retrieved_at else None,
+                "mga_csf_2020":               mark.mga_csf_2020,
+                "mga_csf_2020_label":         mark.mga_csf_2020_label,
+                "ahd_height":                 mark.ahd_height,
+                "ahd_height_label":           mark.ahd_height_label,
+                "ahd_class":                  mark.ahd_class,
+                "mga_zone":                   mark.mga_zone,
+                "mga_easting_label":          mark.mga_easting_label,
+                "mga_northing_label":         mark.mga_northing_label,
+                "surface_level_ahd":          mark.surface_level_ahd,
+                "retrieved_at":               mark.retrieved_at.isoformat() if mark.retrieved_at else None,
             }
         })
-
-    subject_lot_label = None
-    # if result.subject_lot:
-    #     subject_lot_label = f"{result.subject_lot.lot_number}//{result.subject_lot.plan_label}"
-    subject_lot_label = lot_label(result.subject_lot)
 
     return {
         "type": "FeatureCollection",
@@ -85,13 +81,15 @@ def to_geojson(result: SearchResult) -> dict:
         "search": {
             "address_input":     result.address.input_string,
             "address_resolved":  result.address.resolved_string,
+            "search_mode":       result.search_mode,
             "suburb":            result.address.suburb,
             "lga":               result.address.lga,
             "parish":            result.address.parish,
             "county":            result.address.county,
+            "surface_level_ahd": result.address.surface_level_ahd,
             "radius_m":          result.search_radius_m,
             "marks_radius_m":    result.marks_radius_m,
-            "subject_lot":       subject_lot_label,
+            "subject_lot":       lot_label(result.subject_lot),
             "lot_count":         len(result.nearby_lots),
             "plan_count":        len(result.plans),
             "mark_count":        len(result.survey_marks),
@@ -134,6 +132,7 @@ def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m:
     image_path = output_folder / "cre_map.png"
     image_path.write_bytes(response.content)
 
-    print(f"Saved to {output_path}")
-
     return image_path
+
+
+

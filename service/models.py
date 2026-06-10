@@ -45,6 +45,11 @@ class Address:
     parish: Optional[str] = None    # e.g. "WORONORA"
     county: Optional[str] = None    # e.g. "CUMBERLAND"
 
+    # From [ELEV] — AHD surface level (DEM) at this address point
+    surface_level_ahd: Optional[float] = None
+    # Note: each SurveyMark also carries its own surface_level_ahd (DEM at mark location)
+    # allowing comparison with the SCIMS AHD height to detect disturbed marks or significant cut/fill
+
 
 # ── Lot ───────────────────────────────────────────────────────────────────────
 
@@ -211,6 +216,15 @@ class SurveyMark:
     # When this record was fetched from the API.
     # If more than 6 months old, discard and re-fetch before use.
     # Check: (datetime.now() - mark.retrieved_at).days > 180
+
+
+    # From [ELEV] — DEM surface level at this mark's location (Web Mercator input required)
+    # Compare with ahd_height (SCIMS): a significant difference (>0.5m) may indicate a
+    # disturbed mark, significant cut/fill, or data quality issue worth checking in the field.
+    surface_level_ahd: Optional[float] = None
+
+    # Set by api/survey_marks.py during full pipeline (/full-search only, not /search)
+    local_sketch_path: Optional[Path] = None   # downloaded LSP PDF
     
 
 
@@ -235,5 +249,6 @@ class SearchResult:
     datum: str
     mga_zone: int                           # 54, 55, or 56
     
+    search_mode: str = "address"            # "address", "folio", or "polygon"
     cre_map_image: Optional[Path] = None    # PNG saved from CRE MapServer export
     

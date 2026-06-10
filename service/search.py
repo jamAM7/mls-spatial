@@ -1,3 +1,123 @@
+# # Built by search.py — it calls all api/ modules and assembles one SearchResult
+# # nearby_lots includes the subject lot
+# # plans is a deduplicated list — many lots share a plan, only include each plan once
+
+# from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# from service.models import SearchResult, Address, Lot, Plan, SurveyMark
+# from service.utils import sanitise_address, epsg_from_mga_zone, mga_zone_from_longitude
+# from service.config import EPSG_CODES
+# from service.api.address import get_address_coordinates
+# from service.api.lot import get_lot_info
+# from service.api.plan import get_plan_info
+# from service.api.survey_marks import get_survey_mark_info
+
+
+# def search(
+#     address_input: str = None,
+#     folio: str = None,
+#     geometry: dict = None,
+#     radius_m: int = 200,
+#     marks_radius_m: int | None = None,
+#     datum: str = "GDA2020",
+# ) -> SearchResult | None:
+#     """
+#     Main search pipeline. Returns a SearchResult or None if the address cannot be resolved.
+
+#     Search mode priority: geometry > folio > address.
+#     At least one of address_input, folio, or geometry must be supplied.
+
+#     folio and geometry search modes are not yet implemented — address only for now.
+#     """
+
+#     # ── Address search (currently the only implemented mode) ─────────────────
+#     address_input = sanitise_address(address_input)
+
+#     # Pass 1 — WGS84 only, just to get longitude for zone detection
+#     address_geo = get_address_coordinates(address_input, out_sr=4326)
+#     if not address_geo:
+#         return None
+
+#     # Derive zone and EPSG from real longitude
+#     zone = mga_zone_from_longitude(address_geo.longitude)
+#     try:
+#         epsg = EPSG_CODES[(datum, zone)]
+#     except KeyError:
+#         raise ValueError(f"Unsupported datum/zone combination: {datum}, {zone}")
+
+#     # Pass 2 — correct projected coordinates + admin boundaries
+#     address = get_address_coordinates(address_input, out_sr=epsg)
+#     if not address:
+#         return None
+
+#     # Get subject lot — tight query at exact point
+#     subject_candidates = get_lot_info(address.easting, address.northing, epsg, distance=1)
+#     subject_lot = subject_candidates[0] if subject_candidates else None
+
+#     # Get all nearby lots
+#     lots = get_lot_info(address.easting, address.northing, epsg, radius_m) or []
+
+#     # Mark subject lot
+#     if subject_lot:
+#         for lot in lots:
+#             if lot.plan_label == subject_lot.plan_label and lot.lot_number == subject_lot.lot_number:
+#                 lot.is_subject = True
+#                 break
+
+#     # Fetch all unique plans in parallel
+#     seen_plan_labels = list({lot.plan_label for lot in lots})
+#     plans = []
+#     with ThreadPoolExecutor(max_workers=10) as executor:
+#         futures = {executor.submit(get_plan_info, label): label for label in seen_plan_labels}
+#         for future in as_completed(futures):
+#             plan = future.result()
+#             if plan:
+#                 plans.append(plan)
+
+#     # Get survey marks — use marks_radius_m if supplied, otherwise fall back to radius_m
+#     _marks_radius = marks_radius_m if marks_radius_m is not None else radius_m
+#     survey_marks = get_survey_mark_info(address.easting, address.northing, epsg, _marks_radius) or []
+
+#     return SearchResult(
+#         address         = address,
+#         subject_lot     = subject_lot,
+#         nearby_lots     = lots,
+#         plans           = plans,
+#         survey_marks    = survey_marks,
+#         search_radius_m = radius_m,
+#         marks_radius_m  = _marks_radius,
+#         epsg            = epsg,
+#         datum           = datum,
+#         mga_zone        = zone,
+#         search_mode     = "address",
+#         cre_map_image   = None,
+#     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Built by search.py — it calls all api/ modules and assembles one SearchResult
 # nearby_lots includes the subject lot
 # plans is a deduplicated list — many lots share a plan, only include each plan once

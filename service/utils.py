@@ -1,4 +1,5 @@
 import re
+from pyproj import Transformer
 
 _NSW_STREET_ABBREVIATIONS = {
     "ST":   "STREET",
@@ -83,3 +84,17 @@ def lot_label(lot) -> str:
     if lot.section_number:
         return f"{lot.lot_number}/{lot.section_number}/{lot.plan_label}"
     return f"{lot.lot_number}/{lot.plan_label}"
+
+
+
+# Coordinate Conversion
+
+_to_web_mercator = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+ 
+ 
+def to_web_mercator(longitude: float, latitude: float) -> tuple[float, float]:
+    """
+    Convert WGS84 lon/lat to Web Mercator (EPSG:3857).
+    Required for the NSW 5M Elevation [ELEV] ImageServer API.
+    """
+    return _to_web_mercator.transform(longitude, latitude)
