@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  mls-spatial:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./credentials.json:/app/credentials.json
+      - ./token.json:/app/token.json
+      - ./output:/app/output
+      - ./mls_spatial.db:/app/mls_spatial.db

@@ -23,8 +23,13 @@ from service.api.survey_marks import get_survey_mark_info, get_mark_by_reference
 from service.drive import download_plans
 from service.report import generate_report
 from service.utils import lot_label
+from service.history import init_db, record_search, get_history
 
 from clients.draw import draw as draw_png
+
+
+
+
 
 def _asdict_json(obj) -> dict:
     """asdict() with date/datetime values converted to isoformat strings."""
@@ -47,6 +52,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+init_db()
 
 @app.get("/health")
 def health():
@@ -68,6 +74,7 @@ def search_endpoint(
     if result is None:
         raise HTTPException(status_code=404, detail="Address not found")
 
+    record_search(result)
     return JSONResponse(content=to_geojson(result))
 
 
@@ -147,6 +154,7 @@ def full_search_endpoint(
     report_path = generate_report(folder)
 
     summary["report_path"] = str(report_path)
+    record_search(result)
     return JSONResponse(content=summary)
 
 
@@ -194,3 +202,9 @@ def mark_sketch_endpoint(mark_type: str, mark_number: str):
         raise HTTPException(status_code=404, detail=f"No sketch available for {mark_type} {mark_number}")
 
     return FileResponse(sketch_path, media_type="application/pdf", filename=sketch_path.name)
+
+
+@app.get("/history")
+def history_endpoint(limit: int = Query(20, description="Number of recent searches to return")):
+    """Returns the last n searches from local SQLite history."""
+    return JSONResponse(content=get_history(limit=limit))
