@@ -2,7 +2,10 @@
 # nearby_lots includes the subject lot
 # plans is a deduplicated list — many lots share a plan, only include each plan once
 
+from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Callable, Optional
 
 from shapely.geometry import Point, Polygon
 
@@ -29,15 +32,66 @@ def _find_subject_lot(lots: list[Lot], x: float, y: float) -> Lot | None:
     return None
 
 
+def _fetch_all_plans(
+    seen_plan_labels: list[str],
+    on_plan_found: Optional[Callable[[Plan], None]] = None,
+) -> list[Plan]:
+    """
+    Fetches plan metadata for all labels in parallel.
+
+    If on_plan_found is provided (e.g. a Drive download callback), it is called
+    for each plan as soon as its metadata arrives — in a separate Drive thread pool
+    running concurrently with the remaining metadata fetches.
+    This means Drive downloads start immediately rather than waiting for all
+    metadata to be collected first.
+    """
+    plans: list[Plan] = []
+
+    with ThreadPoolExecutor(max_workers=10) as plan_executor:
+        # Separate pool for Drive downloads so they don't block plan metadata fetches
+        drive_executor = ThreadPoolExecutor(max_workers=4) if on_plan_found else None
+        drive_futures = []
+
+        try:
+            plan_futures = {
+                plan_executor.submit(get_plan_info, label): label
+                for label in seen_plan_labels
+            }
+            for future in as_completed(plan_futures):
+                plan = future.result()
+                if plan:
+                    plans.append(plan)
+                    if on_plan_found and drive_executor:
+                        drive_futures.append(drive_executor.submit(on_plan_found, plan))
+
+            # Wait for all Drive downloads to finish before returning
+            for df in as_completed(drive_futures):
+                df.result()
+        finally:
+            if drive_executor:
+                drive_executor.shutdown(wait=True)
+
+    return plans
+
+
 def search(
     address_input: str,
     radius_m: int,
     datum: str = "GDA2020",
     marks_radius_m: int | None = None,
-    grid_spacing_m: int = 5,
+    grid_spacing_m: int | None = 5,
     padding_pct: float = 50.0,
+    on_plan_found: Optional[Callable[[Plan], None]] = None,
 ) -> SearchResult | None:
+    """
+    Main search pipeline. Assembles a SearchResult from all NSW Spatial Services APIs.
 
+    on_plan_found: optional callback fired for each Plan as soon as its metadata
+    arrives from the API. Used by /full-search to kick off Google Drive downloads
+    incrementally rather than in a batch after all metadata is collected.
+
+    grid_spacing_m: pass None to skip the elevation grid (used by /search/png).
+    """
     address_input = sanitise_address(address_input)
 
     # Pass 1 — WGS84 only, to get longitude for zone detection
@@ -79,27 +133,26 @@ def search(
                 lot.is_subject = True
                 break
 
-    # Elevation grid over subject lot bbox — only if subject lot was found
-    elevation_grid = None
-    if subject_lot and subject_lot.geometry:
-        raw = fetch_elevation_grid(
+    # Plans and elevation grid are independent — run in parallel
+    seen_plan_labels = list({lot.plan_label for lot in lots})
+
+    def _run_elevation():
+        if not (subject_lot and subject_lot.geometry and grid_spacing_m is not None):
+            return None
+        return fetch_elevation_grid(
             lot_geometry   = subject_lot.geometry,
             epsg           = epsg,
             grid_spacing_m = grid_spacing_m,
             padding_pct    = padding_pct,
         )
-        if raw:
-            elevation_grid = ElevationGrid(**raw)
 
-    # Fetch all plans in parallel
-    seen_plan_labels = list({lot.plan_label for lot in lots})
-    plans = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = {executor.submit(get_plan_info, label): label for label in seen_plan_labels}
-        for future in as_completed(futures):
-            plan = future.result()
-            if plan:
-                plans.append(plan)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        future_plans     = executor.submit(_fetch_all_plans, seen_plan_labels, on_plan_found)
+        future_elevation = executor.submit(_run_elevation)
+
+    plans              = future_plans.result()
+    elevation_grid_raw = future_elevation.result()
+    elevation_grid     = ElevationGrid(**elevation_grid_raw) if elevation_grid_raw else None
 
     return SearchResult(
         address          = address,
