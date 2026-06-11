@@ -101,6 +101,30 @@ def cre_map_endpoint(
     return FileResponse(image_path, media_type="image/png", filename="cre_map.png")
 
 
+@app.get("/search/png")
+def search_png_endpoint(
+    address: str = Query(..., description="Full street address e.g. '483 GEORGE STREET SYDNEY'"),
+    radius_m: int = Query(200, description="Search radius in metres"),
+    marks_radius_m: int | None = Query(None, description="Search radius for survey marks in metres. Defaults to radius_m when omitted."),
+):
+    """
+    Runs a search and returns the cadastral plan PNG directly.
+    Lighter alternative to /full-search — no plan downloads, no PDF report, no CRE map.
+    """
+    result = search(address, radius_m, marks_radius_m=marks_radius_m)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="Address not found")
+
+    geojson = to_geojson(result)
+
+    tmp = Path(tempfile.mkdtemp())
+    png_path = tmp / "search_plan.png"
+    draw_png(geojson, output_path=str(png_path))
+
+    return FileResponse(png_path, media_type="image/png", filename="search_plan.png")
+
+
 @app.get("/full-search")
 def full_search_endpoint(
     address: str = Query(..., description="Full street address e.g. '483 GEORGE STREET SYDNEY'"),

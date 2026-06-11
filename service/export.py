@@ -69,6 +69,7 @@ def to_geojson(result: SearchResult) -> dict:
                 "mga_northing_label":         mark.mga_northing_label,
                 "surface_level_ahd":          mark.surface_level_ahd,
                 "retrieved_at":               mark.retrieved_at.isoformat() if mark.retrieved_at else None,
+                "marksymbol":                 mark.mark_symbol,   # e.g. "SSR", "PMR", "TSR"
             }
         })
 

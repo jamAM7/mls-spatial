@@ -134,7 +134,7 @@ mls-spatial/
 │   ├── report.py           ~ Basic PDF working (cover, CRE map, lots, marks, plans)
 │   │                         TODO: refactor to accept SearchResult directly
 │   │                         TODO: add bearing/distance column to marks table
-│   ├── history.py          ✗ not built — SQLite search history
+│   ├── history.py          ✓ built — SQLite search history
 │   ├── models.py           ✓ All dataclasses — search_mode, surface_level_ahd fields added
 │   ├── config.py           ✓ Constants and API base URLs
 │   ├── utils.py            ✓ sanitise_address, coordinate helpers, to_web_mercator()
@@ -146,13 +146,13 @@ mls-spatial/
 │       ├── plan.py         ✓ Plan metadata
 │       │                     TODO: async conversion
 │       └── survey_marks.py ✓ Spatial query, get_mark_by_reference(), surface_level_ahd per mark
-│                             TODO: download_sketch() (needs API research with surveyor)
+│                             TODO: download_sketch() (might need API research with surveyor)
 │                             TODO: async conversion
 ├── clients/
-│   ├── draw.py             PNG drawing script (consumes /search endpoint)
-│   └── SPEC.md             Client-side integration notes
+│   ├── draw.py             ✓ PNG drawing script (consumes /search endpoint)
+│   └── SPEC.md             ✓ Client-side integration notes
 ├── console/
-│   ├── run.py              Interactive CLI entry point
+│   ├── run.py              ✓ Interactive CLI entry point
 │   └── search_console.py
 ├── tests/
 │   ├── test_address.py     ✓ first version
@@ -161,15 +161,15 @@ mls-spatial/
 │   └── test_survey_marks.py ✓ first version
 ├── samples/                Original proof-of-concept scripts — reference only
 ├── output/                 Local search output (gitignored)
-├── Dockerfile
-├── docker-compose.yml
+├── Dockerfile              ✓ 
+├── docker-compose.yml      ✓ 
 ├── .github/
 │   └── workflows/
 │       └── test.yml        Run pytest on every push
-├── requirements.txt
-├── .gitignore
-├── README.md
-├── SPEC.md                 This file
+├── requirements.txt        ✓ 
+├── .gitignore              ✓ 
+├── README.md               ✓ 
+├── SPEC.md                 ✓ This file
 └── PLAN.md                 6-week internship plan
 ```
 
@@ -317,6 +317,7 @@ GET /mark/{mark_type}/{mark_number}/sketch
 ```
 
 **Search mode priority:** `geometry` > `folio` > `address`. At least one must be supplied to `/search`.
+There is only address implemented in search.py currently
 
 ---
 
