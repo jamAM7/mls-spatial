@@ -156,6 +156,29 @@ class RoadCentreline:
     geometry: list = field(default_factory=list)
 
 
+# ── ElevationGrid ─────────────────────────────────────────────────────────────
+
+@dataclass
+class ElevationGrid:
+    """
+    AHD surface elevation sampled at a regular grid over the subject lot bbox.
+    Built by api/elevation.py — fetch_elevation_grid().
+
+    grid_spacing_m may differ from the requested spacing if the point count
+    exceeded MAX_GRID_POINTS and was automatically scaled up (see capped field).
+
+    points: list of dicts with keys: row, col, easting, northing, ahd
+    """
+    grid_spacing_m:   int
+    padding_pct:      float
+    bbox_padded:      dict               # min_e, max_e, min_n, max_n in MGA metres
+    rows:             int
+    cols:             int
+    point_count:      int
+    capped:           bool               # True if spacing was increased to stay under cap
+    capped_spacing_m: Optional[int]      # actual spacing used if capped, else None
+    points:           list = field(default_factory=list)
+
 
 # ── Plan ──────────────────────────────────────────────────────────────────────
 
@@ -310,5 +333,6 @@ class SearchResult:
     cre_map_image: Optional[Path] = None    # PNG saved from CRE MapServer export
     roads: list = field(default_factory=list)
     road_centrelines: list = field(default_factory=list)
+    elevation_grid: Optional[ElevationGrid] = None
 
 

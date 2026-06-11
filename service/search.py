@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from shapely.geometry import Point, Polygon
 
-from service.models import SearchResult, Address, Lot, Plan, SurveyMark
+from service.models import SearchResult, Address, Lot, Plan, SurveyMark, ElevationGrid
 from service.utils import sanitise_address, mga_zone_from_longitude
 from service.config import EPSG_CODES
 from service.api.address import get_address_coordinates
@@ -14,6 +14,7 @@ from service.api.lot import get_lot_info
 from service.api.plan import get_plan_info
 from service.api.survey_marks import get_survey_mark_info
 from service.api.road import get_road_info, get_road_centreline_info
+from service.api.elevation import fetch_elevation_grid
 
 
 def _find_subject_lot(lots: list[Lot], x: float, y: float) -> Lot | None:
@@ -33,6 +34,8 @@ def search(
     radius_m: int,
     datum: str = "GDA2020",
     marks_radius_m: int | None = None,
+    grid_spacing_m: int = 5,
+    padding_pct: float = 50.0,
 ) -> SearchResult | None:
 
     address_input = sanitise_address(address_input)
@@ -76,6 +79,18 @@ def search(
                 lot.is_subject = True
                 break
 
+    # Elevation grid over subject lot bbox — only if subject lot was found
+    elevation_grid = None
+    if subject_lot and subject_lot.geometry:
+        raw = fetch_elevation_grid(
+            lot_geometry   = subject_lot.geometry,
+            epsg           = epsg,
+            grid_spacing_m = grid_spacing_m,
+            padding_pct    = padding_pct,
+        )
+        if raw:
+            elevation_grid = ElevationGrid(**raw)
+
     # Fetch all plans in parallel
     seen_plan_labels = list({lot.plan_label for lot in lots})
     plans = []
@@ -100,4 +115,5 @@ def search(
         mga_zone         = zone,
         roads            = roads,
         road_centrelines = road_centrelines,
+        elevation_grid   = elevation_grid,
     )

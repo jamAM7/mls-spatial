@@ -28,9 +28,6 @@ from service.history import init_db, record_search, get_history
 from clients.draw import draw as draw_png
 
 
-
-
-
 def _asdict_json(obj) -> dict:
     """asdict() with date/datetime values converted to isoformat strings."""
     def _convert(v):
@@ -54,6 +51,7 @@ app = FastAPI(
 
 init_db()
 
+
 @app.get("/health")
 def health():
     """C# add-in calls this on startup to confirm the service is running."""
@@ -65,11 +63,19 @@ def search_endpoint(
     address: str = Query(..., description="Full street address e.g. '483 GEORGE STREET SYDNEY'"),
     radius_m: int = Query(200, description="Search radius in metres"),
     marks_radius_m: int | None = Query(None, description="Search radius for survey marks in metres. Defaults to radius_m when omitted."),
+    grid_spacing_m: int = Query(5, description="Elevation grid spacing in metres"),
+    padding_pct: float = Query(50.0, description="Padding around subject lot bbox as a percentage"),
 ):
     """
-    Main endpoint. Returns all lots, plans, and survey marks near the address as GeoJSON.
+    Main endpoint. Returns lots, plans, survey marks, roads, centrelines, and
+    AHD elevation grid over the subject lot bbox as GeoJSON.
     """
-    result = search(address, radius_m, marks_radius_m=marks_radius_m)
+    result = search(
+        address, radius_m,
+        marks_radius_m = marks_radius_m,
+        grid_spacing_m = grid_spacing_m,
+        padding_pct    = padding_pct,
+    )
 
     if result is None:
         raise HTTPException(status_code=404, detail="Address not found")
@@ -109,16 +115,16 @@ def search_png_endpoint(
 ):
     """
     Runs a search and returns the cadastral plan PNG directly.
-    Lighter alternative to /full-search — no plan downloads, no PDF report, no CRE map.
+    Lighter alternative to /full-search — no elevation grid, no plan downloads,
+    no PDF report, no CRE map.
     """
     result = search(address, radius_m, marks_radius_m=marks_radius_m)
 
     if result is None:
         raise HTTPException(status_code=404, detail="Address not found")
 
-    geojson = to_geojson(result)
-
-    tmp = Path(tempfile.mkdtemp())
+    geojson  = to_geojson(result)
+    tmp      = Path(tempfile.mkdtemp())
     png_path = tmp / "search_plan.png"
     draw_png(geojson, output_path=str(png_path))
 
@@ -131,12 +137,19 @@ def full_search_endpoint(
     radius_m: int = Query(200, description="Search radius in metres"),
     marks_radius_m: int | None = Query(None, description="Search radius for survey marks in metres. Defaults to radius_m when omitted."),
     output_folder: str = Query(..., description="Absolute path to the folder where output files will be written"),
+    grid_spacing_m: int = Query(5, description="Elevation grid spacing in metres"),
+    padding_pct: float = Query(50.0, description="Padding around subject lot bbox as a percentage"),
 ):
     """
-    Full search pipeline: search, CRE map, plan downloads, and PDF report.
+    Full search pipeline: search, elevation grid, CRE map, plan downloads, and PDF report.
     Writes all output to output_folder and returns a flat summary dict.
     """
-    result = search(address, radius_m, marks_radius_m=marks_radius_m)
+    result = search(
+        address, radius_m,
+        marks_radius_m = marks_radius_m,
+        grid_spacing_m = grid_spacing_m,
+        padding_pct    = padding_pct,
+    )
 
     if result is None:
         raise HTTPException(status_code=404, detail="Address not found")
@@ -169,7 +182,6 @@ def full_search_endpoint(
         "lot_count":         len(result.nearby_lots),
         "plan_count":        len(result.plans),
         "mark_count":        len(result.survey_marks),
-        # "report_path":       str(report_path),
         "output_folder":     str(folder),
         "mga_zone":          result.mga_zone,
         "searched_at":       datetime.now().strftime("%Y-%m-%d %H:%M:%S"),

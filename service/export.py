@@ -19,13 +19,9 @@ def to_geojson(result: SearchResult) -> dict:
         plan = plan_lookup.get(lot.plan_label)
         features.append({
             "type": "Feature",
-            # "geometry": {
-            #     "type": "Polygon",
-            #     "coordinates": [lot.geometry]
-            # },
             "geometry": {
                 "type": "Polygon",
-                "coordinates": lot.geometry      # was [lot.geometry]
+                "coordinates": lot.geometry,
             },
             "properties": {
                 "feature_type":           "lot",
@@ -49,7 +45,7 @@ def to_geojson(result: SearchResult) -> dict:
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": [mark.easting, mark.northing]
+                "coordinates": [mark.easting, mark.northing],
             },
             "properties": {
                 "feature_type":               "survey_mark",
@@ -57,6 +53,7 @@ def to_geojson(result: SearchResult) -> dict:
                 "mark_type":                  mark.mark_type,
                 "mark_status":                mark.mark_status,
                 "mark_symbol_label":          mark.mark_symbol_label,
+                "marksymbol":                 mark.mark_symbol,
                 "gda_class":                  mark.gda_class,
                 "gda_date":                   str(mark.gda_date) if mark.gda_date else None,
                 "gda_pos_uncertainty_label":  mark.gda_pos_uncertainty_label,
@@ -73,7 +70,6 @@ def to_geojson(result: SearchResult) -> dict:
                 "mga_northing_label":         mark.mga_northing_label,
                 "surface_level_ahd":          mark.surface_level_ahd,
                 "retrieved_at":               mark.retrieved_at.isoformat() if mark.retrieved_at else None,
-                "marksymbol":                 mark.mark_symbol,   # e.g. "SSR", "PMR", "TSR"
             }
         })
 
@@ -97,7 +93,7 @@ def to_geojson(result: SearchResult) -> dict:
                 "cadid":               road.cadid,
             }
         })
-    
+
     for cl in result.road_centrelines:
         for path in cl.geometry:
             if len(path) < 2:
@@ -112,6 +108,22 @@ def to_geojson(result: SearchResult) -> dict:
                     "feature_type":    "road_centreline",
                     "road_name_label": cl.road_name_label,
                     "urbanity":        cl.urbanity,
+                }
+            })
+
+    if result.elevation_grid:
+        for pt in result.elevation_grid.points:
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [pt["easting"], pt["northing"]],
+                },
+                "properties": {
+                    "feature_type": "elevation_sample",
+                    "row":          pt["row"],
+                    "col":          pt["col"],
+                    "ahd":          pt["ahd"],
                 }
             })
 
@@ -139,8 +151,18 @@ def to_geojson(result: SearchResult) -> dict:
             "datum":             result.datum,
             "mga_zone":          result.mga_zone,
             "coordinate_system": crs_label,
+            "elevation_grid": {
+                "grid_spacing_m":   result.elevation_grid.grid_spacing_m,
+                "padding_pct":      result.elevation_grid.padding_pct,
+                "rows":             result.elevation_grid.rows,
+                "cols":             result.elevation_grid.cols,
+                "point_count":      result.elevation_grid.point_count,
+                "capped":           result.elevation_grid.capped,
+                "capped_spacing_m": result.elevation_grid.capped_spacing_m,
+                "bbox_padded":      result.elevation_grid.bbox_padded,
+            } if result.elevation_grid else None,
         },
-        "features": features
+        "features": features,
     }
 
 
@@ -176,6 +198,3 @@ def fetch_cre_map_image(result: SearchResult, output_folder: Path, map_radius_m:
     image_path.write_bytes(response.content)
 
     return image_path
-
-
-
