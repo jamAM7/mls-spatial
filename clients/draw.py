@@ -18,6 +18,9 @@ Usage:
     )
     draw(response.json(), output_path="search_plan.png")
 """
+import matplotlib
+matplotlib.use("Agg")   # non-interactive backend — required when called from a thread
+import matplotlib.pyplot as plt
 
 import base64
 import io
@@ -164,6 +167,13 @@ def _star_position(coords) -> tuple[float, float] | None:
         return tuple(upper.centroid.coords[0])
     except Exception:
         return None
+    
+
+def _get_roads(features: list) -> list:
+    return [f for f in features if f["properties"].get("feature_type") == "road"]
+
+def _get_centrelines(features: list) -> list:
+    return [f for f in features if f["properties"].get("feature_type") == "road_centreline"]
 
 
 # ── Main draw function ────────────────────────────────────────────────────────
@@ -191,19 +201,49 @@ def draw(geojson: dict, output_path: str = "search_plan.png") -> None:
     ax.set_aspect("equal")
     ax.axis("off")
 
+    # ── Draw roads ────────────────────────────────────────────────────────────
+    # Drawn before lots so lot edges win at shared boundaries
+    roads = _get_roads(features)
+    for road in roads:
+        valid_rings = [r for r in road["geometry"]["coordinates"] if len(r) >= 3]
+        if not valid_rings:
+            continue
+
+        for ring in valid_rings:
+            ax.add_patch(MplPolygon(
+                ring, closed=True,
+                facecolor="#e8e0d0", edgecolor="#a09880",
+                linewidth=0.5, alpha=0.9, zorder=1,
+            ))
+
+        # Label on largest ring
+        largest = max(valid_rings, key=lambda r: Polygon(r).area)
+        name    = road["properties"].get("road_name_label", "")
+        rtype   = road["properties"].get("road_type_label", "")
+        label   = f"{name}\n{rtype}" if name and rtype else name
+        if label.strip():
+            _draw_label_in_polygon(ax, largest, label, "", fontsize=3.5)
+
+    # ── Draw road centrelines ─────────────────────────────────────────────────────
+    centrelines = _get_centrelines(features)
+    for cl in centrelines:
+        coords = cl["geometry"]["coordinates"]   # [[x,y], [x,y], ...] — already one path
+        if len(coords) < 2:
+            continue
+        xs = [p[0] for p in coords]
+        ys = [p[1] for p in coords]
+        ax.plot(xs, ys, color="#888880", linewidth=0.8, zorder=2, solid_capstyle="round")
+
     # ── Draw lots ─────────────────────────────────────────────────────────────
     subject_star_pos = None
 
     for lot in lots:
         props       = lot["properties"]
-        coords      = lot["geometry"]["coordinates"][0]
+        rings       = lot["geometry"]["coordinates"]  # list of rings — may be >1 for part lots
         lot_number  = props.get("lot_number", "")
         plan_label  = props.get("plan_label", "")
         is_surveyed = props.get("is_surveyed")
         is_subject  = props.get("is_subject", False)
-
-        if len(coords) < 3:
-            continue
 
         if is_surveyed is True:
             facecolor, edgecolor = "#ffb6c1", "#c2185b"
@@ -212,15 +252,24 @@ def draw(geojson: dict, output_path: str = "search_plan.png") -> None:
         else:
             facecolor, edgecolor = "grey", "dimgrey"
 
-        ax.add_patch(MplPolygon(
-            coords, closed=True,
-            facecolor=facecolor, edgecolor=edgecolor,
-            linewidth=0.5, alpha=0.7,
-        ))
-        _draw_label_in_polygon(ax, coords, lot_number, plan_label, is_subject=is_subject)
+        valid_rings = [r for r in rings if len(r) >= 3]
+        if not valid_rings:
+            continue
+
+        # Draw every ring — part lots have multiple separate polygon parts
+        for ring in valid_rings:
+            ax.add_patch(MplPolygon(
+                ring, closed=True,
+                facecolor=facecolor, edgecolor=edgecolor,
+                linewidth=0.5, alpha=0.7,
+            ))
+
+        # Label and star on the largest ring only
+        largest = max(valid_rings, key=lambda r: Polygon(r).area if len(r) >= 3 else 0)
+        _draw_label_in_polygon(ax, largest, lot_number, plan_label, is_subject=is_subject)
 
         if is_subject:
-            subject_star_pos = _star_position(coords)
+            subject_star_pos = _star_position(largest)
 
     # ── Subject lot star — positioned above the centroid label ───────────────
     if subject_star_pos:

@@ -19,9 +19,13 @@ def to_geojson(result: SearchResult) -> dict:
         plan = plan_lookup.get(lot.plan_label)
         features.append({
             "type": "Feature",
+            # "geometry": {
+            #     "type": "Polygon",
+            #     "coordinates": [lot.geometry]
+            # },
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [lot.geometry]
+                "coordinates": lot.geometry      # was [lot.geometry]
             },
             "properties": {
                 "feature_type":           "lot",
@@ -72,6 +76,44 @@ def to_geojson(result: SearchResult) -> dict:
                 "marksymbol":                 mark.mark_symbol,   # e.g. "SSR", "PMR", "TSR"
             }
         })
+
+    for road in result.roads:
+        if not road.geometry:
+            continue
+        features.append({
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": road.geometry,
+            },
+            "properties": {
+                "feature_type":        "road",
+                "road_name_label":     road.road_name_label,
+                "road_type":           road.road_type,
+                "road_type_label":     road.road_type_label,
+                "road_corridor_type":  road.road_corridor_type,
+                "road_corridor_label": road.road_corridor_label,
+                "urbanity":            road.urbanity,
+                "cadid":               road.cadid,
+            }
+        })
+    
+    for cl in result.road_centrelines:
+        for path in cl.geometry:
+            if len(path) < 2:
+                continue
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": path,
+                },
+                "properties": {
+                    "feature_type":    "road_centreline",
+                    "road_name_label": cl.road_name_label,
+                    "urbanity":        cl.urbanity,
+                }
+            })
 
     return {
         "type": "FeatureCollection",

@@ -32,14 +32,25 @@ HAS_STRATUM = {
 }
 
 
+# def _parse_geometry(rings: list) -> list:
+#     """
+#     Converts ArcGIS polygon rings into a flat list of [easting, northing] pairs.
+#     Takes the first ring only (outer boundary).
+#     """
+#     if not rings:
+#         return []
+#     return [[coord[0], coord[1]] for coord in rings[0]]
+
+
 def _parse_geometry(rings: list) -> list:
     """
-    Converts ArcGIS polygon rings into a flat list of [easting, northing] pairs.
-    Takes the first ring only (outer boundary).
+    Converts ArcGIS polygon rings into a list of rings,
+    each ring being a list of [easting, northing] pairs.
+    Part lots have multiple rings — all are kept.
     """
     if not rings:
         return []
-    return [[coord[0], coord[1]] for coord in rings[0]]
+    return [[[coord[0], coord[1]] for coord in ring] for ring in rings]
 
 
 def get_lot_info(x: float, y: float, epsg: int, distance: int = 200) -> list[Lot] | None:

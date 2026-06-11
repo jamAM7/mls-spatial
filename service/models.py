@@ -93,11 +93,68 @@ class Lot:
     modified_date: Optional[datetime] = None    # ModifiedDate
 
     # Geometry — [LOT]
-    geometry: list = field(default_factory=list)  # polygon rings — list of [easting, northing] pairs
-                                                   # returnGeometry=true must be set in API query
+    geometry: list = field(default_factory=list)    # list of polygon rings — each ring is a list of
+                                                    # [easting, northing] pairs. Part lots have
+                                                    # multiple rings; normal lots have one.
+                                                    # returnGeometry=true must be set in API query
 
     # Search context — set by search.py, not from API
     is_subject: bool = False            # True for the lot at the searched address
+
+
+# ── Road ──────────────────────────────────────────────────────────────────────
+
+@dataclass
+class Road:
+    """
+    A road corridor polygon from the NSW Land Parcel Property theme.
+    Source: [ROAD] — FeatureServer/5
+
+    road_name_label is the human-readable road name e.g. "George Street".
+    road_type and road_corridor_type are coded values decoded in api/road.py.
+    Verify both domain dicts against the layer 5 metadata.
+    """
+
+    # Identity
+    cadid: Optional[int] = None
+    road_name_oid: Optional[int] = None         # roadnameoid — links to road name register
+    road_name_label: str = ""                   # roadnamelabel e.g. "George Street"
+
+    # Road classification
+    road_type: Optional[int] = None             # roadtype — coded value
+    road_type_label: Optional[str] = None       # decoded e.g. "Dedicated Road"
+    road_corridor_type: Optional[int] = None    # roadcorridortype — coded value
+    road_corridor_label: Optional[str] = None   # decoded e.g. "Arterial", "Local"
+
+    # Context
+    urbanity: Optional[str] = None              # "U" urban / "R" rural
+    classsubtype: Optional[int] = None
+
+    # Geometry — list of rings, each ring a list of [easting, northing] pairs.
+    # Same shape as Lot.geometry.
+    geometry: list = field(default_factory=list)
+
+
+# ── RoadCentreline ────────────────────────────────────────────────────────────
+
+@dataclass
+class RoadCentreline:
+    """
+    A road centreline from the NSW Land Parcel Property theme.
+    Source: FeatureServer/1
+
+    Geometry is a list of paths (polyline), each path a list of
+    [easting, northing] pairs. Most centrelines have a single path.
+    """
+
+    cadid: Optional[int] = None
+    road_name_oid: Optional[int] = None
+    road_name_label: str = ""           # roadnamelabel e.g. "George Street"
+    urbanity: Optional[str] = None      # "U" urban / "R" rural
+
+    # Geometry — list of paths, each path a list of [easting, northing] pairs
+    geometry: list = field(default_factory=list)
+
 
 
 # ── Plan ──────────────────────────────────────────────────────────────────────
@@ -251,4 +308,7 @@ class SearchResult:
     
     search_mode: str = "address"            # "address", "folio", or "polygon"
     cre_map_image: Optional[Path] = None    # PNG saved from CRE MapServer export
-    
+    roads: list = field(default_factory=list)
+    road_centrelines: list = field(default_factory=list)
+
+
