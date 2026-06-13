@@ -118,11 +118,11 @@ def _get_marks(features: list) -> list:
 
 def _draw_label_in_polygon(ax, coords, lot_number, plan_label, fontsize=4, is_subject=False):
     """
-    Draws the lot number and plan label inside the polygon.
+    Draws the lot number, section number and plan label inside the polygon.
     For the subject lot, positions the text in the lower portion so it
     doesn't overlap with the star drawn in the upper portion.
-    Uses representative_point() instead of centroid to guarantee the
-    label always falls inside the polygon, even for concave/irregular shapes.
+    Uses representative_point() to guarantee the label always falls inside
+    the polygon, even for concave/irregular shapes.
     """
     try:
         from shapely.geometry import box as shapely_box
@@ -254,12 +254,18 @@ def draw(geojson: dict, output_path: str = "search_plan.png") -> None:
     subject_star_pos = None
 
     for lot in lots:
-        props       = lot["properties"]
-        rings       = lot["geometry"]["coordinates"]
-        lot_number  = props.get("lot_number", "")
-        plan_label  = props.get("plan_label", "")
-        is_surveyed = props.get("is_surveyed")
-        is_subject  = props.get("is_subject", False)
+        props          = lot["properties"]
+        rings          = lot["geometry"]["coordinates"]
+        lot_number     = props.get("lot_number", "")
+        section_number = props.get("section_number", "") or ""
+        plan_label     = props.get("plan_label", "")
+        is_surveyed    = props.get("is_surveyed")
+        is_subject     = props.get("is_subject", False)
+
+        # Build lot label including section number if present
+        lot_label = lot_number
+        if section_number:
+            lot_label += f"\nSec {section_number}"
 
         if is_surveyed is True:
             facecolor, edgecolor = "#ffb6c1", "#c2185b"
@@ -279,16 +285,12 @@ def draw(geojson: dict, output_path: str = "search_plan.png") -> None:
                 facecolor=facecolor, edgecolor=edgecolor,
                 linewidth=0.5, alpha=0.7,
             ))
-            _draw_label_in_polygon(ax, ring, lot_number, plan_label, is_subject=is_subject)
+            _draw_label_in_polygon(ax, ring, lot_label, plan_label, is_subject=is_subject)
 
         # Star on largest ring only
         largest = max(valid_rings, key=lambda r: Polygon(r).area if len(r) >= 3 else 0)
         if is_subject:
             subject_star_pos = _star_position(largest)
-
-
-
-
 
     # ── Subject lot star ──────────────────────────────────────────────────────
     if subject_star_pos:
@@ -297,7 +299,6 @@ def draw(geojson: dict, output_path: str = "search_plan.png") -> None:
 
     # ── Draw survey marks ─────────────────────────────────────────────────────
     seen_symbols: dict[str, str] = {}
-    using_real_symbols = _SYMBOL_DIR.exists()
 
     for mark in marks:
         props             = mark["properties"]
