@@ -55,10 +55,10 @@ def safe(v):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def generate_report(output_folder: Path) -> Path:
-    summary = load_json(output_folder / "summary.json")
-    geojson = load_json(output_folder / "search_result.geojson")
+    summary = load_json(output_folder / "ss_summary.json")
+    geojson = load_json(output_folder / "ss_search_result.geojson")
 
-    pdf_path = output_folder / "report.pdf"
+    pdf_path = output_folder / "ss_report.pdf"
     doc = SimpleDocTemplate(str(pdf_path), pagesize=A4)
 
     story = []
@@ -80,7 +80,7 @@ def generate_report(output_folder: Path) -> Path:
         ["County", safe(summary.get("county"))],
         ["Subject Lot", safe(summary.get("subject_lot"))],
         ["Search Radius", f'{summary["search_radius_m"]} m'],
-        ["Coordinate System", crs_label], 
+        ["Coordinate System", crs_label],
         ["Lots Found", summary["lot_count"]],
         ["Plans Found", summary["plan_count"]],
         ["Survey Marks", summary["mark_count"]],
@@ -109,7 +109,7 @@ def generate_report(output_folder: Path) -> Path:
     story.append(Paragraph("CADASTRAL REFERENCE MAP", HEADER_STYLE))
     story.append(Spacer(1, 10))
 
-    cre_map = output_folder / "cre_map.png"
+    cre_map = output_folder / "ss_cre_map.png"
     if cre_map.exists():
         img = Image(str(cre_map))
         img.drawHeight = 180 * mm
@@ -205,10 +205,6 @@ def generate_report(output_folder: Path) -> Path:
         "Mark No", "Type", "Status", "Symbol",
         "Class", "AHD Height", "MGA Zone", f"MGA{zone} Easting", f"MGA{zone} Northing"
     ]
-    # mark_headers = [
-    #     "Mark No", "Type", "Status", "Symbol",
-    #     "Class", "AHD Height", "Easting", "Northing"
-    # ]
 
     mark_rows = [mark_headers]
 
@@ -225,7 +221,7 @@ def generate_report(output_folder: Path) -> Path:
             p.get("mark_symbol_label"),
             p.get("gda_class"),
             p.get("ahd_height_label"),
-            p.get("mga_zone"), # This is a test
+            p.get("mga_zone"),
             p.get("mga_easting_label"),
             p.get("mga_northing_label"),
         ])

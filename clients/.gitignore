@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 console/output/
 *.png
+!symbol_dump/*.png
+!symbol_dump_2/*.png

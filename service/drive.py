@@ -226,6 +226,7 @@ def choose_best_candidate(planlabel: str, candidates: list[dict]) -> Optional[di
 def choose_best_xml_candidate(planlabel: str, candidates: list[dict]) -> Optional[dict]:
     pl_exact, digits = plan_name_patterns(planlabel)
     filtered = []
+    tick = []
     for f in candidates:
         name = f.get("name") or ""
         if "88b" in name.lower():
@@ -251,14 +252,14 @@ def choose_best_xml_candidate(planlabel: str, candidates: list[dict]) -> Optiona
 
 # ── Single plan download ──────────────────────────────────────────────────────
 
-def download_single_plan(service, plan: Plan, plans_folder: Path) -> None:
+def download_single_plan(service, plan: Plan, dest_folder: Path) -> None:
     """
     Search Drive for a single plan and download the best PDF/image match.
     Also downloads an XML sidecar if found.
     Sets plan.local_file if a file is downloaded.
 
-    Called incrementally by search.py's on_plan_found callback as each plan's
-    metadata arrives, rather than waiting for all plans to be collected first.
+    Plans are written directly to dest_folder (no subfolder) so all files
+    sit flat alongside other manually downloaded files in the Search folder.
     """
     # PDF / image
     q = build_drive_query_for_plan(plan.plan_label)
@@ -269,7 +270,7 @@ def download_single_plan(service, plan: Plan, plans_folder: Path) -> None:
 
     best = choose_best_candidate(plan.plan_label, hits)
     if best:
-        out_path = plans_folder / safe_filename(best.get("name", ""))
+        out_path = dest_folder / safe_filename(best.get("name", ""))
         download_file(service, best["id"], out_path)
         plan.local_file = out_path
         print(f"  [downloaded] {out_path.name}")
@@ -282,7 +283,7 @@ def download_single_plan(service, plan: Plan, plans_folder: Path) -> None:
     if hits_xml:
         best_xml = choose_best_xml_candidate(plan.plan_label, hits_xml)
         if best_xml:
-            out_xml = plans_folder / safe_filename(best_xml.get("name", ""))
+            out_xml = dest_folder / safe_filename(best_xml.get("name", ""))
             download_file(service, best_xml["id"], out_xml)
             print(f"  [downloaded xml] {out_xml.name}")
 
@@ -292,16 +293,11 @@ def download_single_plan(service, plan: Plan, plans_folder: Path) -> None:
 def download_plans(result: SearchResult, dest_folder: Path) -> SearchResult:
     """
     Downloads all plans in result.plans from Google Drive.
-    Used as a fallback when on_plan_found was not passed to search().
-    For /full-search, prefer passing on_plan_found to search() instead —
-    that starts Drive downloads as each plan's metadata arrives rather than
-    waiting for all metadata to be collected first.
+    Plans are written directly to dest_folder (no subfolder).
     """
     service = get_drive_service()
-    plans_folder = dest_folder / "plans"
-    plans_folder.mkdir(parents=True, exist_ok=True)
 
     for plan in result.plans:
-        download_single_plan(service, plan, plans_folder)
+        download_single_plan(service, plan, dest_folder)
 
     return result

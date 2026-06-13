@@ -104,7 +104,7 @@ def cre_map_endpoint(
     if not image_path:
         raise HTTPException(status_code=500, detail="CRE map generation failed")
 
-    return FileResponse(image_path, media_type="image/png", filename="cre_map.png")
+    return FileResponse(image_path, media_type="image/png", filename="ss_cre_map.png")
 
 
 @app.get("/search/png")
@@ -125,10 +125,10 @@ def search_png_endpoint(
 
     geojson  = to_geojson(result)
     tmp      = Path(tempfile.mkdtemp())
-    png_path = tmp / "search_plan.png"
+    png_path = tmp / "ss_search_plan.png"
     draw_png(geojson, output_path=str(png_path))
 
-    return FileResponse(png_path, media_type="image/png", filename="search_plan.png")
+    return FileResponse(png_path, media_type="image/png", filename="ss_search_plan.png")
 
 
 @app.get("/full-search")
@@ -158,10 +158,10 @@ def full_search_endpoint(
     folder.mkdir(parents=True, exist_ok=True)
 
     geojson = to_geojson(result)
-    (folder / "search_result.geojson").write_text(json.dumps(geojson, indent=2))
+    (folder / "ss_search_result.geojson").write_text(json.dumps(geojson, indent=2))
 
     result.cre_map_image = fetch_cre_map_image(result, folder, map_radius_m=radius_m)
-    draw_png(geojson, output_path=str(folder / "search_plan.png"))
+    draw_png(geojson, output_path=str(folder / "ss_search_plan.png"))
     result = download_plans(result, folder)
 
     crs_label = f"{result.datum} MGA Zone {result.mga_zone} (EPSG:{result.epsg})"
@@ -186,7 +186,7 @@ def full_search_endpoint(
         "mga_zone":          result.mga_zone,
         "searched_at":       datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
-    (folder / "summary.json").write_text(json.dumps(summary, indent=2))
+    (folder / "ss_summary.json").write_text(json.dumps(summary, indent=2))
     report_path = generate_report(folder)
 
     summary["report_path"] = str(report_path)
