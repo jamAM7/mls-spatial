@@ -121,6 +121,8 @@ def _draw_label_in_polygon(ax, coords, lot_number, plan_label, fontsize=4, is_su
     Draws the lot number and plan label inside the polygon.
     For the subject lot, positions the text in the lower portion so it
     doesn't overlap with the star drawn in the upper portion.
+    Uses representative_point() instead of centroid to guarantee the
+    label always falls inside the polygon, even for concave/irregular shapes.
     """
     try:
         from shapely.geometry import box as shapely_box
@@ -136,11 +138,18 @@ def _draw_label_in_polygon(ax, coords, lot_number, plan_label, fontsize=4, is_su
                 ib_minx, ib_miny, ib_maxx, ib_maxy = inner.bounds
                 mid_y = (ib_miny + ib_maxy) / 2
                 lower = inner.intersection(shapely_box(ib_minx - 1, ib_miny - 1, ib_maxx + 1, mid_y))
-                cx, cy = (lower.centroid.x, lower.centroid.y) if not lower.is_empty else (poly.centroid.x, poly.centroid.y)
+                if not lower.is_empty:
+                    pt = lower.representative_point()
+                    cx, cy = pt.x, pt.y
+                else:
+                    pt = inner.representative_point()
+                    cx, cy = pt.x, pt.y
             else:
-                cx, cy = poly.centroid.x, poly.centroid.y
+                pt = poly.representative_point()
+                cx, cy = pt.x, pt.y
         else:
-            cx, cy = poly.centroid.x, poly.centroid.y
+            pt = poly.representative_point()
+            cx, cy = pt.x, pt.y
 
         label = f"{lot_number}\n{plan_label}" if lot_number else plan_label
         ax.text(cx, cy, label, ha="center", va="center",
@@ -263,18 +272,23 @@ def draw(geojson: dict, output_path: str = "search_plan.png") -> None:
         if not valid_rings:
             continue
 
+        # Draw every ring — part lots have multiple separate polygon parts
         for ring in valid_rings:
             ax.add_patch(MplPolygon(
                 ring, closed=True,
                 facecolor=facecolor, edgecolor=edgecolor,
                 linewidth=0.5, alpha=0.7,
             ))
+            _draw_label_in_polygon(ax, ring, lot_number, plan_label, is_subject=is_subject)
 
+        # Star on largest ring only
         largest = max(valid_rings, key=lambda r: Polygon(r).area if len(r) >= 3 else 0)
-        _draw_label_in_polygon(ax, largest, lot_number, plan_label, is_subject=is_subject)
-
         if is_subject:
             subject_star_pos = _star_position(largest)
+
+
+
+
 
     # ── Subject lot star ──────────────────────────────────────────────────────
     if subject_star_pos:
