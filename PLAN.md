@@ -47,43 +47,43 @@ All Python repos follow the same pattern: FastAPI service, structured as a packa
 ### Tasks
 
 **Day 1 — Read everything first**
-- Read SPEC.md in full. Understand every section before writing code.
-- Read all existing service/ files: models.py, search.py, export.py, server.py, api/
-- Read the three GitHub issue descriptions
-- Update SPEC.md: correct the "Current position" line, mark Phase 1 complete
-- Do not write any feature code until this is done
+- Read SPEC.md in full. Understand every section before writing code.                   # DONE
+- Read all existing service/ files: models.py, search.py, export.py, server.py, api/    # DONE
+- Read the three GitHub issue descriptions                                              # DONE
+- Update SPEC.md: correct the "Current position" line, mark Phase 1 complete            # DONE
+- Do not write any feature code until this is done                                      # DONE
 
 **Bug fixes (Issues #1, #2, #3)**
-- Fix section number in subject_lot label — 4 places (Issue #3)
-- Add missing mark fields to export.py GeoJSON output (Issue #2)
-- Add `marks_radius_m` parameter to search.py and server.py (Issue #1)
+- Fix section number in subject_lot label — 4 places (Issue #3)                         # DONE
+- Add missing mark fields to export.py GeoJSON output (Issue #2)                        # DONE
+- Add `marks_radius_m` parameter to search.py and server.py (Issue #1)                  # DONE
 
 **Code cleanup**
-- Delete commented-out dead code in search.py (lines 36-51)
-- Fix `spatialsearch.py` — add `if __name__ == "__main__"` guard or delete it
-- Fix broken test imports in tests/test_survey_marks.py
+- Delete commented-out dead code in search.py (lines 36-51)                             # DONE
+- Fix `spatialsearch.py` — add `if __name__ == "__main__"` guard or delete it           # not done
+- Fix broken test imports in tests/test_survey_marks.py                                 # DONE
 
 **New features**
-- `GET /mark/{mark_type}/{mark_number}` endpoint — uses `[MARK_ATTR]` attribute query
-- `GET /mark/{mark_type}/{mark_number}/sketch` endpoint — fetches LSP PDF from `[SKETCH]`
-- Surface level AHD at subject address — add to `Address` model, query `[ELEV]`, include in GeoJSON
+- `GET /mark/{mark_type}/{mark_number}` endpoint — uses `[MARK_ATTR]` attribute query                   # DONE
+- `GET /mark/{mark_type}/{mark_number}/sketch` endpoint — fetches LSP PDF from `[SKETCH]`               # not done
+- Surface level AHD at subject address — add to `Address` model, query `[ELEV]`, include in GeoJSON     # maybe partly
 
 **Engineering hygiene**
-- Rewrite all tests with mocked HTTP using `pytest-httpx` (no live API calls)
-- Add `Dockerfile` and `docker-compose.yml`
-- Add GitHub Actions workflow — runs pytest on every push
-- Add SQLite search history (`service/history.py`, `GET /history` endpoint)
-- Convert NSW API calls to async using `httpx` + `asyncio`
+- Rewrite all tests with mocked HTTP using `pytest-httpx` (no live API calls)           # DONE
+- Add `Dockerfile` and `docker-compose.yml`                                             # DONE needs testing though
+- Add GitHub Actions workflow — runs pytest on every push                               # not done
+- Add SQLite search history (`service/history.py`, `GET /history` endpoint)             # DONE
+- Convert NSW API calls to async using `httpx` + `asyncio`                              # not done
 
 ### Definition of done
-- All 3 GitHub issues closed with a PR each
-- `pytest tests/` passes with no live API calls
-- Green CI badge visible on the GitHub repo
-- `docker build` succeeds
-- `/mark/TS/2761` returns a SurveyMark JSON object
-- `/mark/TS/2761/sketch` returns a PDF
-- Surface level appears in the `search` block of GeoJSON output
-- `GET /history` returns the last 20 searches
+- All 3 GitHub issues closed with a PR each                                             # no pr
+- `pytest tests/` passes with no live API calls                                         # DONE
+- Green CI badge visible on the GitHub repo                                             # not done
+- `docker build` succeeds                                                               # not tested
+- `/mark/TS/2761` returns a SurveyMark JSON object                                      # needs to be checked
+- `/mark/TS/2761/sketch` returns a PDF                                                  # not done
+- Surface level appears in the `search` block of GeoJSON output                         # needs to be checked
+- `GET /history` returns the last 20 searches                                           # DONE
 
 ### Career skills demonstrated
 - Bug triage and issue ownership (closes 3 public GitHub issues)
@@ -92,7 +92,8 @@ All Python repos follow the same pattern: FastAPI service, structured as a packa
 - Async Python (httpx/asyncio)
 - SQLite and basic database design
 
----
+Note for next week # must review new test cases made for week 1
+---                         
 
 ## Week 2 — mls-infotrack: New Python Service
 
