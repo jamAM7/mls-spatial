@@ -66,7 +66,6 @@ All Python repos follow the same pattern: FastAPI service, structured as a packa
 **New features**
 - `GET /mark/{mark_type}/{mark_number}` endpoint — uses `[MARK_ATTR]` attribute query
 - `GET /mark/{mark_type}/{mark_number}/sketch` endpoint — fetches LSP PDF from `[SKETCH]`
-- SCIMS sketch download during `/full-search` pipeline
 - Surface level AHD at subject address — add to `Address` model, query `[ELEV]`, include in GeoJSON
 
 **Engineering hygiene**
