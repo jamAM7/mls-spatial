@@ -25,6 +25,7 @@ def to_geojson(result: SearchResult) -> dict:
             },
             "properties": {
                 "feature_type":           "lot",
+                "address":                lot.address,
                 "lot_number":             lot.lot_number,
                 "plan_label":             lot.plan_label,
                 "plan_number":            lot.plan_number,

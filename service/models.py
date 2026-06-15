@@ -101,6 +101,9 @@ class Lot:
     # Search context — set by search.py, not from API
     is_subject: bool = False            # True for the lot at the searched address
 
+    # From [PROP] — FeatureServer/12 Property layer, joined by cadid == propid
+    address: Optional[str] = None           # full address string e.g. "12 SMITH ST SYDNEY NSW 2000"
+
 
 # ── Road ──────────────────────────────────────────────────────────────────────
 

@@ -78,6 +78,9 @@ def get_lot_info(x: float, y: float, epsg: int, distance: int = 200) -> list[Lot
 
         features = data.get("features", [])
         all_features.extend(features)
+        # Test Debug
+        if all_features and offset == 0:
+            print("DEBUG lot attrs:", all_features[0]["attributes"])
 
         if not data.get("exceededTransferLimit", False):
             break  # got all results

@@ -7,7 +7,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Optional
 
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point, Polygon as ShapelyPolygon
 
 from service.models import SearchResult, Address, Lot, Plan, SurveyMark, ElevationGrid
 from service.utils import sanitise_address, mga_zone_from_longitude
@@ -18,6 +18,7 @@ from service.api.plan import get_plan_info
 from service.api.survey_marks import get_survey_mark_info
 from service.api.road import get_road_info, get_road_centreline_info
 from service.api.elevation import fetch_elevation_grid
+from service.api.property import get_address_at_point
 
 
 def _find_subject_lot(lots: list[Lot], x: float, y: float) -> Lot | None:
@@ -25,7 +26,7 @@ def _find_subject_lot(lots: list[Lot], x: float, y: float) -> Lot | None:
     for lot in lots:
         for ring in lot.geometry:
             try:
-                if len(ring) >= 3 and Polygon(ring).contains(pt):
+                if len(ring) >= 3 and ShapelyPolygon(ring).contains(pt):
                     return lot
             except Exception:
                 pass
@@ -123,6 +124,21 @@ def search(
     survey_marks     = future_marks.result()       or []
     roads            = future_roads.result()       or []
     road_centrelines = future_centrelines.result() or []
+
+    # Query FS/12 at each lot's centroid in parallel to get property addresses
+    def _get_lot_address(lot: Lot) -> tuple[Lot, str | None]:
+        if not lot.geometry:
+            return lot, None
+        try:
+            point = ShapelyPolygon(lot.geometry[0]).representative_point()
+            return lot, get_address_at_point(point.x, point.y, epsg)
+        except Exception:
+            return lot, None
+
+    with ThreadPoolExecutor(max_workers=10) as addr_executor:
+        for future in as_completed([addr_executor.submit(_get_lot_address, lot) for lot in lots]):
+            lot, addr = future.result()
+            lot.address = addr
 
     # Find subject lot by point-in-polygon — no extra API call needed
     subject_lot = _find_subject_lot(lots, address.easting, address.northing)
