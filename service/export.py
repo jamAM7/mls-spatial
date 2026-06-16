@@ -145,7 +145,7 @@ def to_geojson(result: SearchResult) -> dict:
             "surface_level_ahd": result.address.surface_level_ahd,
             "radius_m":          result.search_radius_m,
             "marks_radius_m":    result.marks_radius_m,
-            "subject_lot":       lot_label(result.subject_lot),
+            "subject_lot":       lot_label(result.subject_lot) if result.subject_lot else None,
             "lot_count":         len(result.nearby_lots),
             "plan_count":        len(result.plans),
             "mark_count":        len(result.survey_marks),

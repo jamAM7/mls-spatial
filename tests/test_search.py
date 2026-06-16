@@ -26,14 +26,16 @@ def _addr_callback(request):
     return (200, {"Content-Type": "application/json"}, json.dumps(data))
 
 
-ADDR_URL   = "https://portal.spatial.nsw.gov.au/server/rest/services/NSW_Geocoded_Addressing_Theme/FeatureServer/1/query"
-ADMIN_BASE = "https://portal.spatial.nsw.gov.au/server/rest/services/NSW_Administrative_Boundaries_Theme/FeatureServer"
-LOT_URL    = "https://portal.spatial.nsw.gov.au/server/rest/services/NSW_Land_Parcel_Property_Theme/FeatureServer/8/query"
-SM_URL     = "https://portal.spatial.nsw.gov.au/server/rest/services/SurveyMarkGDA2020/MapServer/0/query"
+BASE     = "https://portal.spatial.nsw.gov.au/server/rest/services"
+
+ADDR_URL   = f"{BASE}/NSW_Geocoded_Addressing_Theme_multiCRS/MapServer/1/query"
+ADMIN_BASE = f"{BASE}/NSW_Administrative_Boundaries_Theme/FeatureServer"
+LOT_URL    = f"{BASE}/NSW_Land_Parcel_Property_Theme_multiCRS/FeatureServer/8/query"
+SM_URL     = f"{BASE}/SurveyMarkGDA2020_multiCRS/FeatureServer/0/query"
+ROAD_URL   = f"{BASE}/NSW_Land_Parcel_Property_Theme_multiCRS/FeatureServer/5/query"
+CL_URL     = f"{BASE}/NSW_Land_Parcel_Property_Theme_multiCRS/FeatureServer/1/query"
 PLAN_BASE  = "https://maps.six.nsw.gov.au/arcgis/rest/services/sixmaps/Boundaries/MapServer"
-ROAD_URL   = "https://portal.spatial.nsw.gov.au/server/rest/services/NSW_Transport_Theme/FeatureServer/1/query"
-CL_URL     = "https://portal.spatial.nsw.gov.au/server/rest/services/NSW_Transport_Theme/FeatureServer/0/query"
-ELEV_URL   = "https://portal.spatial.nsw.gov.au/server/rest/services/elevation/ImageServer/identify"
+ELEV_URL   = "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_5M_Elevation/ImageServer/identify"
 
 
 def _register_all(register_elevation=False):

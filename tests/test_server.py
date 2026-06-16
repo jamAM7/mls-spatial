@@ -103,21 +103,21 @@ def test_health_returns_ok():
 # ── /search ───────────────────────────────────────────────────────────────────
 
 def test_search_returns_200():
-    with patch("server.search", return_value=_make_result()), \
-         patch("server.record_search"):
+    with patch("service.server.search", return_value=_make_result()), \
+         patch("service.server.record_search"):
         response = client.get("/search", params={"address": "87 BUNARBA ROAD GYMEA BAY"})
     assert response.status_code == 200
 
 
 def test_search_returns_feature_collection():
-    with patch("server.search", return_value=_make_result()), \
-         patch("server.record_search"):
+    with patch("service.server.search", return_value=_make_result()), \
+         patch("service.server.record_search"):
         response = client.get("/search", params={"address": "87 BUNARBA ROAD GYMEA BAY"})
     assert response.json()["type"] == "FeatureCollection"
 
 
 def test_search_404_on_invalid_address():
-    with patch("server.search", return_value=None):
+    with patch("service.server.search", return_value=None):
         response = client.get("/search", params={"address": "FAKE ADDRESS XYZ"})
     assert response.status_code == 404
 
@@ -130,7 +130,7 @@ def test_search_requires_address_param():
 # ── /search/png ───────────────────────────────────────────────────────────────
 
 def test_search_png_404_on_invalid_address():
-    with patch("server.search", return_value=None):
+    with patch("service.server.search", return_value=None):
         response = client.get("/search/png", params={"address": "FAKE ADDRESS XYZ"})
     assert response.status_code == 404
 
@@ -143,7 +143,7 @@ def test_search_png_requires_address_param():
 # ── /full-search ──────────────────────────────────────────────────────────────
 
 def test_full_search_404_on_invalid_address(tmp_path):
-    with patch("server.search", return_value=None):
+    with patch("service.server.search", return_value=None):
         response = client.get("/full-search", params={
             "address": "FAKE ADDRESS XYZ",
             "output_folder": str(tmp_path),
@@ -157,12 +157,12 @@ def test_full_search_requires_output_folder():
 
 
 def test_full_search_returns_summary_keys(tmp_path):
-    with patch("server.search", return_value=_make_result()), \
-         patch("server.fetch_cre_map_image", return_value=None), \
-         patch("server.draw_png"), \
-         patch("server.download_plans", return_value=_make_result()), \
-         patch("server.generate_report", return_value=tmp_path / "ss_report.pdf"), \
-         patch("server.record_search"):
+    with patch("service.server.search", return_value=_make_result()), \
+         patch("service.server.fetch_cre_map_image", return_value=None), \
+         patch("service.server.draw_png"), \
+         patch("service.server.download_plans", return_value=_make_result()), \
+         patch("service.server.generate_report", return_value=tmp_path / "ss_report.pdf"), \
+         patch("service.server.record_search"):
         response = client.get("/full-search", params={
             "address": "87 BUNARBA ROAD GYMEA BAY",
             "output_folder": str(tmp_path),
@@ -178,13 +178,13 @@ def test_full_search_returns_summary_keys(tmp_path):
 # ── /history ──────────────────────────────────────────────────────────────────
 
 def test_history_returns_200():
-    with patch("server.get_history", return_value=[]):
+    with patch("service.server.get_history", return_value=[]):
         response = client.get("/history")
     assert response.status_code == 200
 
 
 def test_history_returns_list():
-    with patch("server.get_history", return_value=[]):
+    with patch("service.server.get_history", return_value=[]):
         response = client.get("/history")
     assert isinstance(response.json(), list)
 
@@ -192,13 +192,13 @@ def test_history_returns_list():
 # ── /plan/{plan_label} ────────────────────────────────────────────────────────
 
 def test_plan_endpoint_404_on_unknown():
-    with patch("server.get_plan_info", return_value=None):
+    with patch("service.server.get_plan_info", return_value=None):
         response = client.get("/plan/DP000000")
     assert response.status_code == 404
 
 
 def test_plan_endpoint_returns_200_when_found():
-    with patch("server.get_plan_info", return_value=_make_plan()):
+    with patch("service.server.get_plan_info", return_value=_make_plan()):
         response = client.get("/plan/DP999001")
     assert response.status_code == 200
 
@@ -206,6 +206,6 @@ def test_plan_endpoint_returns_200_when_found():
 # ── /mark/{type}/{number} ─────────────────────────────────────────────────────
 
 def test_mark_endpoint_404_on_unknown():
-    with patch("server.get_mark_by_reference", return_value=None):
+    with patch("service.server.get_mark_by_reference", return_value=None):
         response = client.get("/mark/SS/99999")
     assert response.status_code == 404

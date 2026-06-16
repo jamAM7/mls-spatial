@@ -53,10 +53,12 @@ def test_geometry_contains_coordinate_pairs():
     resp.add(resp.GET, LOT_URL, json=_load("lot_response.json"))
     result = get_lot_info(X, Y, EPSG)
     for lot in result:
-        for point in lot.geometry:
-            assert len(point) == 2
-            assert 300000 < point[0] < 700000   # easting
-            assert 6000000 < point[1] < 7000000  # northing
+        for ring in lot.geometry:          # geometry is list of rings
+            assert len(ring) >= 3          # a ring needs at least 3 points
+            for point in ring:
+                assert len(point) == 2
+                assert 300000 < point[0] < 700000   # easting
+                assert 6000000 < point[1] < 7000000  # northing
 
 
 @resp.activate

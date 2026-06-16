@@ -60,17 +60,17 @@ All Python repos follow the same pattern: FastAPI service, structured as a packa
 
 **Code cleanup**
 - Delete commented-out dead code in search.py (lines 36-51)                             # DONE
-- Fix `spatialsearch.py` — add `if __name__ == "__main__"` guard or delete it           # not done
+- Fix `spatialsearch.py` — add `if __name__ == "__main__"` guard or delete it           # DONE deleted
 - Fix broken test imports in tests/test_survey_marks.py                                 # DONE
 
 **New features**
 - `GET /mark/{mark_type}/{mark_number}` endpoint — uses `[MARK_ATTR]` attribute query                   # DONE
-- `GET /mark/{mark_type}/{mark_number}/sketch` endpoint — fetches LSP PDF from `[SKETCH]`               # not done
-- Surface level AHD at subject address — add to `Address` model, query `[ELEV]`, include in GeoJSON     # maybe partly
+- `GET /mark/{mark_type}/{mark_number}/sketch` endpoint — fetches LSP PDF from `[SKETCH]`               # check with surveyor if still doing this (need to find correct API to use)
+- Surface level AHD at subject address — add to `Address` model, query `[ELEV]`, include in GeoJSON     # check with surveyor there is grid ahd level for address but not specifically for model address
 
 **Engineering hygiene**
 - Rewrite all tests with mocked HTTP using `pytest-httpx` (no live API calls)           # DONE
-- Add `Dockerfile` and `docker-compose.yml`                                             # DONE needs testing though
+- Add `Dockerfile` and `docker-compose.yml`                                             # DONE needs testing though 
 - Add GitHub Actions workflow — runs pytest on every push                               # not done
 - Add SQLite search history (`service/history.py`, `GET /history` endpoint)             # DONE
 - Convert NSW API calls to async using `httpx` + `asyncio`                              # not done
