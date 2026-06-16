@@ -187,7 +187,7 @@ def _is_exact_plan_match(filename: str, pl_exact: str, digits: str) -> bool:
         return True
     if re.search(r'\b' + prefix + r'[\s_]0*' + digits + r'\b', name_u):
         return True
-    plan_word = "DEPOSITED[\s_]PLAN" if prefix == "DP" else "STRATA[\s_]PLAN"
+    plan_word = r"DEPOSITED[\s_]PLAN" if prefix == "DP" else r"STRATA[\s_]PLAN"
     if re.search(plan_word + r'[\s_]0*' + digits + r'\b', name_u):
         return True
     if re.search(r'(?<![0-9])0*' + digits + r'(?![0-9])', name_u):

@@ -70,10 +70,10 @@ All Python repos follow the same pattern: FastAPI service, structured as a packa
 
 **Engineering hygiene**
 - Rewrite all tests with mocked HTTP using `pytest-httpx` (no live API calls)           # DONE
-- Add `Dockerfile` and `docker-compose.yml`                                             # DONE needs testing though 
-- Add GitHub Actions workflow — runs pytest on every push                               # not done
+- Add `Dockerfile` and `docker-compose.yml`                                             # DONE
+- Add GitHub Actions workflow — runs pytest on every push                               # DONE
 - Add SQLite search history (`service/history.py`, `GET /history` endpoint)             # DONE
-- Convert NSW API calls to async using `httpx` + `asyncio`                              # not done
+- Convert NSW API calls to async using `httpx` + `asyncio`                              # check with surveyor, bit of a big change and already runs API calls in parallel using ThreadPoolExecutor
 
 ### Definition of done
 - All 3 GitHub issues closed with a PR each                                             # no pr

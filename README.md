@@ -1,9 +1,11 @@
+![CI](https://github.com/jamAM7/mls-spatial/actions/workflows/ci.yml/badge.svg)
+
 # MLS Spatial Search
 
 NSW cadastral search tool — queries Spatial Services APIs to return lots, survey plans and survey marks for a given address. Generates cadastral drawings, CRE map images and downloads plan documents from Google Drive.
 
 ## Requirements
-- Python 3.x
+- Python 3.11
 - `credentials.json` — Google OAuth credentials (provided separately, never committed to git)
 - `token.json` — created automatically on first run after authenticating with Google
 
@@ -35,6 +37,31 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Running with Docker (recommended)
+
+Docker is the easiest way to run the service without configuring a local Python environment.
+
+### Requirements
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- `credentials.json` and `token.json` in the project root
+
+### Start the service
+```
+docker compose up --build
+```
+
+The service will be available at `http://localhost:8000`.
+
+To run in the background:
+```
+docker compose up --build -d
+```
+
+To stop:
+```
+docker compose down
+```
+
 ## Usage
 
 Run the console app:
@@ -62,7 +89,7 @@ Results are saved to `output/{address}-{date}/` containing:
 - `cre_map.png` — CRE raster map image (options 2, 3, 4)
 - `plans/` — downloaded plan PDFs from Google Drive (option 3)
 
-## Running the FastAPI Service (optional)
+## FastAPI Service
 
 For programmatic access or the AutoCAD add-in:
 ```
@@ -82,11 +109,19 @@ Interactive API documentation: `http://localhost:8000/docs`
 
 ## Testing
 
+Run the full test suite:
 ```
 pytest tests/ -v
 ```
 
-Tests use mocked HTTP via the `responses` library and require no internet connection. All NSW Spatial Services API calls are intercepted using fixture data in `tests/fixtures/`.
+To save output to a file:
+```
+pytest tests/ -v > test_results.txt 2>&1
+```
+
+Tests use mocked HTTP via the `responses` library — no internet connection or running server required. All NSW Spatial Services API calls are intercepted using fixture JSON files in `tests/fixtures/`.
+
+CI runs automatically on every push via GitHub Actions.
 
 ## Data Sources
 - NSW Spatial Services: https://portal.spatial.nsw.gov.au
