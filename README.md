@@ -17,7 +17,7 @@ git clone https://github.com/jamAM7/mls-spatial.git
 cd mls-spatial
 ```
 
-2. Place `credentials.json` and `token.json` in the project root (obtain from project administrator)
+2. Place `credentials.json` in the project root (obtain from project administrator)
 
 3. Create and activate a virtual environment
 
@@ -37,34 +37,90 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+5. Authenticate with Google Drive (first time only)
+
+Run the console app once:
+```
+python console/run.py
+```
+
+A browser window will open asking you to authorise Google Drive access. Complete it and `token.json` will be created in the project root. You only need to do this once — the token is reused and auto-refreshed on every subsequent run.
+
 ## Running with Docker (recommended)
 
-Docker is the easiest way to run the service without configuring a local Python environment.
+Docker runs the FastAPI service in an isolated container with no local Python environment required. The console app still runs locally against the service over HTTP.
 
-### Requirements
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
 - `credentials.json` and `token.json` in the project root
 
-### Start the service
+`token.json` must exist before starting Docker — the container cannot run the interactive browser auth flow. Complete step 5 of [Setup](#setup) first if you haven't already.
+
+### First run
+
+Create an empty database file so Docker mounts it correctly:
+```
+touch mls_spatial.db
+```
+
+Then start the service:
 ```
 docker compose up --build
 ```
 
-The service will be available at `http://localhost:8000`.
+The `--build` flag builds the image from the Dockerfile. The first run takes a minute or two to download the base image and install dependencies — subsequent starts are fast.
 
-To run in the background:
+The FastAPI service will be available at `http://localhost:8000`.
+
+### Day-to-day usage
+
+Start the service:
 ```
-docker compose up --build -d
+docker compose up
 ```
 
-To stop:
+Once you see this in the terminal, the service is running:
+```
+mls-spatial-mls-spatial-1  | INFO:     Application startup complete.
+mls-spatial-mls-spatial-1  | INFO:     Uvicorn running on http://0.0.0.0:8000
+```
+
+The FastAPI service is now running at `http://localhost:8000`. You can verify it's working by opening `http://localhost:8000/docs` in your browser — this shows the interactive API documentation where you can test endpoints directly.
+
+To run the console app, open a separate terminal and run:
+```
+python console/run.py
+```
+
+To start the service in the background (no terminal output):
+```
+docker compose up -d
+```
+
+To stop the service:
 ```
 docker compose down
 ```
 
+Rebuild after code changes:
+```
+docker compose up --build
+```
+
+### What gets mounted
+
+The container shares these paths with your local machine — no rebuild needed when these files change:
+
+| Host path | Container path | Purpose |
+|---|---|---|
+| `./credentials.json` | `/app/credentials.json` | Google OAuth credentials |
+| `./token.json` | `/app/token.json` | Google OAuth token (auto-refreshed) |
+| `./output/` | `/app/output/` | Search results and generated files |
+| `./mls_spatial.db` | `/app/mls_spatial.db` | Search history database |
+
 ## Usage
 
-Run the console app:
+With either the local server or Docker running, start the console app:
 ```
 python console/run.py
 ```
@@ -91,7 +147,7 @@ Results are saved to `output/{address}-{date}/` containing:
 
 ## FastAPI Service
 
-For programmatic access or the AutoCAD add-in:
+For programmatic access or the AutoCAD add-in, the service can also be run locally without Docker:
 ```
 uvicorn service.server:app --port 8000
 ```

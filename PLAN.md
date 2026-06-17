@@ -76,13 +76,13 @@ All Python repos follow the same pattern: FastAPI service, structured as a packa
 - Convert NSW API calls to async using `httpx` + `asyncio`                              # check with surveyor, bit of a big change and already runs API calls in parallel using ThreadPoolExecutor
 
 ### Definition of done
-- All 3 GitHub issues closed with a PR each                                             # no pr
+- All 3 GitHub issues closed with a PR each                                             # DONE
 - `pytest tests/` passes with no live API calls                                         # DONE
-- Green CI badge visible on the GitHub repo                                             # not done
-- `docker build` succeeds                                                               # not tested
-- `/mark/TS/2761` returns a SurveyMark JSON object                                      # needs to be checked
-- `/mark/TS/2761/sketch` returns a PDF                                                  # not done
-- Surface level appears in the `search` block of GeoJSON output                         # needs to be checked
+- Green CI badge visible on the GitHub repo                                             # DONE
+- `docker build` succeeds                                                               # DONE
+- `/mark/TS/2761` returns a SurveyMark JSON object                                      # DONE
+- `/mark/TS/2761/sketch` returns a PDF                                                  # check with surveyor about doing this
+- Surface level appears in the `search` block of GeoJSON output                         # DONE "surface_level_ahd" is reported
 - `GET /history` returns the last 20 searches                                           # DONE
 
 ### Career skills demonstrated
