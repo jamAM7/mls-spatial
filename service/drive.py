@@ -15,17 +15,23 @@ credentials.json and token.json are gitignored — never commit them.
 from __future__ import annotations
 
 import re
+import time
+import logging
 from pathlib import Path
 from typing import Optional
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.errors import HttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 from service.models import SearchResult, Plan
+
+logger = logging.getLogger(__name__)
 
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -106,9 +112,13 @@ def get_drive_service():
 # ── Drive query helpers ───────────────────────────────────────────────────────
 
 def drive_list_files(service, q: str, page_size: int = 200) -> list[dict]:
-    """List files matching a Drive query, supporting shared drives."""
+    """List files matching a Drive query, supporting shared drives.
+    
+    Implements exponential backoff for rate limit (429) and temporary (5xx) errors.
+    """
     files: list[dict] = []
     page_token = None
+    max_retries = 3
 
     base_kwargs = dict(
         q=q,
@@ -125,9 +135,28 @@ def drive_list_files(service, q: str, page_size: int = 200) -> list[dict]:
         base_kwargs["corpora"] = "user"
 
     while True:
-        resp = service.files().list(pageToken=page_token, **base_kwargs).execute()
-        files.extend(resp.get("files", []))
-        page_token = resp.get("nextPageToken")
+        retries = 0
+        while retries < max_retries:
+            try:
+                resp = service.files().list(pageToken=page_token, **base_kwargs).execute()
+                files.extend(resp.get("files", []))
+                page_token = resp.get("nextPageToken")
+                break  # Success, exit retry loop
+            except HttpError as e:
+                if e.resp.status in (429, 500, 502, 503, 504):  # Rate limit or temp server error
+                    retries += 1
+                    if retries >= max_retries:
+                        logger.warning(f"Drive query failed after {max_retries} retries: {e}")
+                        return files  # Return partial results
+                    wait_time = 2 ** retries  # Exponential backoff: 2s, 4s, 8s
+                    logger.debug(f"Drive API error {e.resp.status}, retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    raise  # Re-raise non-retryable errors
+            except Exception as e:
+                logger.error(f"Unexpected error in drive_list_files: {e}")
+                return files  # Return partial results
+
         if not page_token:
             break
 
@@ -135,15 +164,38 @@ def drive_list_files(service, q: str, page_size: int = 200) -> list[dict]:
 
 
 def download_file(service, file_id: str, out_path: Path) -> None:
-    """Download a Drive file to out_path."""
-    request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+    """Download a Drive file to out_path.
+    
+    Implements exponential backoff for rate limit and temporary server errors.
+    """
+    max_retries = 3
+    retries = 0
+    
+    while retries < max_retries:
+        try:
+            request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with out_path.open("wb") as f:
-        downloader = MediaIoBaseDownload(f, request)
-        done = False
-        while not done:
-            _, done = downloader.next_chunk()
+            with out_path.open("wb") as f:
+                downloader = MediaIoBaseDownload(f, request)
+                done = False
+                while not done:
+                    _, done = downloader.next_chunk()
+            return  # Success
+        except HttpError as e:
+            if e.resp.status in (429, 500, 502, 503, 504):
+                retries += 1
+                if retries >= max_retries:
+                    logger.warning(f"Download failed after {max_retries} retries for {file_id}: {e}")
+                    raise
+                wait_time = 2 ** retries
+                logger.debug(f"Download API error {e.resp.status}, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise  # Re-raise non-retryable errors
+        except Exception as e:
+            logger.error(f"Unexpected error downloading {file_id}: {e}")
+            raise
 
 
 # ── File selection logic ──────────────────────────────────────────────────────
@@ -260,44 +312,91 @@ def download_single_plan(service, plan: Plan, dest_folder: Path) -> None:
 
     Plans are written directly to dest_folder (no subfolder) so all files
     sit flat alongside other manually downloaded files in the Search folder.
+    
+    Note: Each thread gets its own service object to avoid SSL connection pool issues.
     """
-    # PDF / image
-    q = build_drive_query_for_plan(plan.plan_label)
-    hits = drive_list_files(service, q=q)
-    hits = list({h["id"]: h for h in hits if h.get("id")}.values())
+    try:
+        # PDF / image
+        q = build_drive_query_for_plan(plan.plan_label)
+        hits = drive_list_files(service, q=q)
+        hits = list({h["id"]: h for h in hits if h.get("id")}.values())
 
-    print(f"[Drive] {plan.plan_label}: {len(hits)} candidate(s)")
+        print(f"[Drive] {plan.plan_label}: {len(hits)} candidate(s)")
 
-    best = choose_best_candidate(plan.plan_label, hits)
-    if best:
-        out_path = dest_folder / safe_filename(best.get("name", ""))
-        download_file(service, best["id"], out_path)
-        plan.local_file = out_path
-        print(f"  [downloaded] {out_path.name}")
+        best = choose_best_candidate(plan.plan_label, hits)
+        if best:
+            out_path = dest_folder / safe_filename(best.get("name", ""))
+            try:
+                download_file(service, best["id"], out_path)
+                plan.local_file = out_path
+                print(f"  [downloaded] {out_path.name}")
+            except Exception as e:
+                logger.error(f"Failed to download {plan.plan_label} (best={best.get('name')}): {e}")
 
-    # XML sidecar
-    q_xml = build_drive_query_for_plan_xml(plan.plan_label)
-    hits_xml = drive_list_files(service, q=q_xml)
-    hits_xml = list({h["id"]: h for h in hits_xml if h.get("id")}.values())
+        # XML sidecar
+        q_xml = build_drive_query_for_plan_xml(plan.plan_label)
+        hits_xml = drive_list_files(service, q=q_xml)
+        hits_xml = list({h["id"]: h for h in hits_xml if h.get("id")}.values())
 
-    if hits_xml:
-        best_xml = choose_best_xml_candidate(plan.plan_label, hits_xml)
-        if best_xml:
-            out_xml = dest_folder / safe_filename(best_xml.get("name", ""))
-            download_file(service, best_xml["id"], out_xml)
-            print(f"  [downloaded xml] {out_xml.name}")
+        if hits_xml:
+            best_xml = choose_best_xml_candidate(plan.plan_label, hits_xml)
+            if best_xml:
+                out_xml = dest_folder / safe_filename(best_xml.get("name", ""))
+                try:
+                    download_file(service, best_xml["id"], out_xml)
+                    print(f"  [downloaded xml] {out_xml.name}")
+                except Exception as e:
+                    logger.error(f"Failed to download XML for {plan.plan_label}: {e}")
+    except Exception as e:
+        logger.error(f"Error processing plan {plan.plan_label}: {e}")
 
 
 # ── Batch entry point (used when incremental callback is not set) ─────────────
 
-def download_plans(result: SearchResult, dest_folder: Path) -> SearchResult:
+def _download_plan_worker(plan: Plan, dest_folder: Path) -> None:
     """
-    Downloads all plans in result.plans from Google Drive.
-    Plans are written directly to dest_folder (no subfolder).
+    Worker function for parallel plan downloads.
+    Creates its own service object in the thread to avoid SSL connection pool corruption.
     """
     service = get_drive_service()
+    download_single_plan(service, plan, dest_folder)
 
-    for plan in result.plans:
-        download_single_plan(service, plan, dest_folder)
+
+def download_plans(result: SearchResult, dest_folder: Path) -> SearchResult:
+    """
+    Downloads all plans in result.plans from Google Drive with controlled parallelism.
+    Plans are written directly to dest_folder (no subfolder).
+    
+    Each thread creates its own service object to avoid SSL connection pool issues
+    on Windows (SSL: internal error, WRONG_VERSION_NUMBER, etc).
+    
+    Uses ThreadPoolExecutor with max_workers=4 to avoid overwhelming Google Drive API.
+    Implements exponential backoff for rate limiting.
+    """
+    total_plans = len(result.plans)
+    
+    logger.info(f"Starting parallel download of {total_plans} plans (max_workers=4)")
+    
+    completed = 0
+    failed = []
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {
+            executor.submit(_download_plan_worker, plan, dest_folder): plan
+            for plan in result.plans
+        }
+        for future in as_completed(futures):
+            plan = futures[future]
+            completed += 1
+            try:
+                future.result()
+                logger.debug(f"[{completed}/{total_plans}] {plan.plan_label} completed")
+            except Exception as e:
+                logger.error(f"[{completed}/{total_plans}] {plan.plan_label} failed: {e}")
+                failed.append(plan.plan_label)
+    
+    if failed:
+        logger.warning(f"Failed to download {len(failed)} plans: {failed}")
+    logger.info(f"Download complete: {completed}/{total_plans} processed")
 
     return result
