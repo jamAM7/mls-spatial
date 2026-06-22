@@ -18,7 +18,7 @@ from dataclasses import asdict
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse, FileResponse
 
-from service.search import search
+from service.search import search, search_from_lot
 from service.export import to_geojson, fetch_cre_map_image
 from service.api.plan import get_plan_info
 from service.api.survey_marks import get_survey_mark_info, get_mark_by_reference, download_sketch
@@ -419,3 +419,61 @@ def mark_sketch_endpoint(mark_type: str, mark_number: str):
 def history_endpoint(limit: int = Query(20, description="Number of recent searches to return")):
     """Returns the last n searches from local SQLite history."""
     return JSONResponse(content=get_history(limit=limit))
+
+
+@app.get("/search/folio")
+def search_folio_endpoint(
+    folio: str = Query(..., description="Lot/section/plan reference e.g. '102/1/DP574558'"),
+    marks_radius_m: int = Query(200, description="Search radius for survey marks in metres"),
+    grid_spacing_m: int = Query(5, description="Elevation grid spacing in metres"),
+    padding_pct: float = Query(50.0, description="Padding around subject lot bbox as a percentage"),
+):
+    """
+    Search by folio (lot/section/plan) instead of address.
+    
+    Example: /search/folio?folio=102/1/DP574558
+    
+    Returns the same GeoJSON as /search, with the folio lot as the subject lot.
+    """
+    from service.api.lot import get_lot_by_folio
+    from service.search import search_from_lot
+    
+    # Query the lot by folio
+    lot = get_lot_by_folio(folio)
+    
+    if not lot or not lot.geometry:
+        raise HTTPException(status_code=404, detail=f"Lot not found for folio {folio}")
+    
+    # Get lot centroid
+    try:
+        from shapely.geometry import Polygon, MultiPolygon
+        
+        if len(lot.geometry) == 1:
+            polygon = Polygon(lot.geometry[0])
+        else:
+            polygons = [Polygon(ring) for ring in lot.geometry]
+            polygon = MultiPolygon(polygons) if len(polygons) > 1 else polygons[0]
+        
+        centroid = polygon.representative_point()
+        x, y = centroid.x, centroid.y
+        epsg = 7856  # MGA Zone 56
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to calculate lot centroid: {str(e)}")
+    
+    # Run search from the lot
+    result = search_from_lot(
+        lot=lot,
+        x=x,
+        y=y,
+        epsg=epsg,
+        marks_radius_m=marks_radius_m,
+        grid_spacing_m=grid_spacing_m,
+        padding_pct=padding_pct,
+    )
+    
+    if result is None:
+        raise HTTPException(status_code=500, detail=f"Search failed for folio {folio}")
+    
+    record_search(result)
+    return JSONResponse(content=to_geojson(result))

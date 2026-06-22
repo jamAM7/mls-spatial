@@ -186,3 +186,122 @@ def search(
         road_centrelines = road_centrelines,
         elevation_grid   = elevation_grid,
     )
+
+
+def search_from_lot(
+    lot: Lot,
+    x: float,
+    y: float,
+    epsg: int,
+    datum: str = "GDA2020",
+    marks_radius_m: int = 200,
+    grid_spacing_m: int | None = 5,
+    padding_pct: float = 50.0,
+    on_plan_found: Optional[Callable[[Plan], None]] = None,
+) -> SearchResult | None:
+    """
+    Search pipeline starting from a known lot (folio search).
+    
+    Instead of address geocoding, uses the lot's centroid directly.
+    The provided lot becomes the subject_lot.
+    
+    Args:
+        lot: The Lot object (already fetched by folio)
+        x, y: Centroid coordinates in the specified EPSG
+        epsg: Coordinate reference system code
+        datum, marks_radius_m, grid_spacing_m, padding_pct: Same as search()
+        on_plan_found: Optional callback for incremental plan downloads
+    """
+    _marks_radius = marks_radius_m if marks_radius_m is not None else 200
+
+    # All spatial queries from the lot centroid — run in parallel
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        future_lots        = executor.submit(get_lot_info, x, y, epsg, 0)  # radius_m=0, just get the point
+        future_marks       = executor.submit(get_survey_mark_info, x, y, epsg, _marks_radius)
+        future_roads       = executor.submit(get_road_info, x, y, epsg, 200)  # Standard 200m for roads
+        future_centrelines = executor.submit(get_road_centreline_info, x, y, epsg, 200)
+
+    lots             = future_lots.result()        or []
+    survey_marks     = future_marks.result()       or []
+    roads            = future_roads.result()       or []
+    road_centrelines = future_centrelines.result() or []
+
+    # Add the original lot to the results if not already there
+    # (it might be returned by get_lot_info or might not be, depending on geometry)
+    lot_labels = {(l.plan_label, l.lot_number) for l in lots}
+    if (lot.plan_label, lot.lot_number) not in lot_labels:
+        lots.insert(0, lot)
+
+    # Query FS/12 at each lot's centroid in parallel to get property addresses
+    def _get_lot_address(lot_item: Lot) -> tuple[Lot, str | None]:
+        if not lot_item.geometry:
+            return lot_item, None
+        try:
+            point = ShapelyPolygon(lot_item.geometry[0]).representative_point()
+            return lot_item, get_address_at_point(point.x, point.y, epsg)
+        except Exception:
+            return lot_item, None
+
+    with ThreadPoolExecutor(max_workers=10) as addr_executor:
+        for future in as_completed([addr_executor.submit(_get_lot_address, lot_item) for lot_item in lots]):
+            lot_item, addr = future.result()
+            lot_item.address = addr
+
+    # Mark the original lot as subject
+    for lot_item in lots:
+        if lot_item.plan_label == lot.plan_label and lot_item.lot_number == lot.lot_number:
+            lot_item.is_subject = True
+            break
+
+    # Plans and elevation grid — run in parallel
+    seen_plan_labels = list({lot_item.plan_label for lot_item in lots})
+
+    def _run_elevation():
+        if not (lot and lot.geometry and grid_spacing_m is not None):
+            return None
+        return fetch_elevation_grid(
+            lot_geometry   = lot.geometry,
+            epsg           = epsg,
+            grid_spacing_m = grid_spacing_m,
+            padding_pct    = padding_pct,
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        future_plans     = executor.submit(_fetch_all_plans, seen_plan_labels, on_plan_found)
+        future_elevation = executor.submit(_run_elevation)
+
+    plans              = future_plans.result()
+    elevation_grid_raw = future_elevation.result()
+    elevation_grid     = ElevationGrid(**elevation_grid_raw) if elevation_grid_raw else None
+
+    # Create a dummy Address object for the search result
+    from service.models import Address as AddressModel
+    dummy_address = AddressModel(
+        input_string=f"{lot.lot_number}/{lot.section_number}/{lot.plan_label}".rstrip("/"),
+        resolved_string=f"{lot.lot_number}/{lot.section_number}/{lot.plan_label}".rstrip("/"),
+        longitude=0,  # Not used for folio
+        latitude=0,
+        easting=x,
+        northing=y,
+        suburb="",
+        lga="",
+        parish="",
+        county="",
+    )
+
+    return SearchResult(
+        address          = dummy_address,
+        subject_lot      = lot,
+        nearby_lots      = lots,
+        plans            = plans,
+        survey_marks     = survey_marks,
+        search_radius_m  = 0,  # No radius for folio search
+        marks_radius_m   = _marks_radius,
+        cre_map_image    = None,
+        epsg             = epsg,
+        datum            = datum,
+        mga_zone         = mga_zone_from_longitude(0),  # Get from EPSG code instead
+        roads            = roads,
+        road_centrelines = road_centrelines,
+        elevation_grid   = elevation_grid,
+    )
