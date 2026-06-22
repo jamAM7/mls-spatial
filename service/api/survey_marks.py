@@ -180,6 +180,32 @@ def get_mark_by_reference(mark_type: str, mark_number: str) -> SurveyMark | None
 
 
 def download_sketch(mark: SurveyMark, dest_folder: Path) -> Path | None:
-    return None
-
-
+    """
+    Downloads the sketch PDF for a survey mark from the SIX Maps SketchPlans API.
+    
+    API: http://maps.six.nsw.gov.au/SketchPlansWS/rest/getSketchPlans
+    Parameter: surveyMark={mark_type}{mark_number} (e.g., surveyMark=PM31035)
+    
+    Returns the path to the downloaded PDF, or None if not found.
+    """
+    if not mark.mark_type or not mark.mark_number:
+        return None
+    
+    mark_ref = f"{mark.mark_type}{mark.mark_number}"
+    
+    try:
+        api_url = "http://maps.six.nsw.gov.au/SketchPlansWS/rest/getSketchPlans"
+        params = {"surveyMark": mark_ref}
+        
+        response = requests.get(api_url, params=params, timeout=10)
+        
+        if response.status_code == 200 and "pdf" in response.headers.get("content-type", "").lower():
+            out_path = dest_folder / f"{mark_ref}_sketch.pdf"
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_bytes(response.content)
+            return out_path
+        
+        return None
+    
+    except Exception:
+        return None
