@@ -1,4 +1,5 @@
 import requests
+import json
 from service.config import BASE
 from service.models import Lot
 
@@ -124,6 +125,87 @@ def get_lot_info(x: float, y: float, epsg: int, distance: int = 200) -> list[Lot
 
     # Note: is_subject is intentionally not set here — it defaults to False.
     # search.py is responsible for identifying the subject lot and setting is_subject=True.
+    return results
+
+
+def get_lots_within_polygon(
+    rings: list[list[list[float]]],
+    epsg: int,
+) -> list[Lot]:
+    """
+    Returns all cadastral lots that intersect the given polygon.
+
+    Args:
+        rings: Coordinate rings in [[x, y], ...] format, already in `epsg`.
+               First ring is the exterior; subsequent rings are holes.
+        epsg:  EPSG code of the input coordinates (must be a projected MGA zone).
+    """
+    geometry_json = json.dumps({
+        "rings": rings,
+        "spatialReference": {"wkid": epsg},
+    })
+
+    all_features = []
+    offset = 0
+
+    while True:
+        params = {
+            "geometry":          geometry_json,
+            "geometryType":      "esriGeometryPolygon",
+            "spatialRel":        "esriSpatialRelIntersects",
+            "inSR":              str(epsg),
+            "outSR":             str(epsg),
+            "outFields":         "*",
+            "returnGeometry":    True,
+            "resultOffset":      offset,
+            "resultRecordCount": 100,
+            "f":                 "json",
+        }
+
+        response = requests.get(LOT_URL, params=params)
+        data = response.json()
+
+        features = data.get("features", [])
+        all_features.extend(features)
+
+        if not data.get("exceededTransferLimit", False):
+            break
+
+        offset += len(features)
+
+    results = []
+    for feature in all_features:
+        attrs = feature.get("attributes", {})
+        rings_raw = feature.get("geometry", {}).get("rings", [])
+        if not rings_raw:
+            continue
+
+        its_title_status_raw = attrs.get("itstitlestatus")
+        stratum_level_raw    = attrs.get("stratumlevel")
+        has_stratum_raw      = attrs.get("hasstratum")
+
+        results.append(Lot(
+            lot_number                = attrs.get("lotnumber") or "",
+            plan_label                = attrs.get("planlabel") or "",
+            section_number            = attrs.get("sectionnumber") or "",
+            plan_number               = attrs.get("plannumber"),
+            plan_oid                  = attrs.get("planoid"),
+            its_lot_id                = attrs.get("itslotid"),
+            cad_id                    = attrs.get("cadid"),
+            controlling_authority_oid = attrs.get("controllingauthorityoid"),
+            classsubtype              = attrs.get("classsubtype"),
+            its_title_status          = its_title_status_raw,
+            its_title_status_label    = ITS_TITLE_STATUS.get(its_title_status_raw),
+            stratum_level             = stratum_level_raw,
+            stratum_level_label       = STRATUM_LEVEL.get(stratum_level_raw),
+            has_stratum               = (HAS_STRATUM.get(has_stratum_raw) == "True") if has_stratum_raw is not None else None,
+            plan_lot_area             = attrs.get("planlotarea"),
+            plan_lot_area_units       = attrs.get("planlotareaunits"),
+            create_date               = attrs.get("createdate"),
+            modified_date             = attrs.get("modifieddate"),
+            geometry                  = _parse_geometry(rings_raw),
+        ))
+
     return results
 
 

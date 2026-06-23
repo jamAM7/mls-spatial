@@ -7,7 +7,8 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Optional
 
-from shapely.geometry import Point, Polygon as ShapelyPolygon
+from shapely.geometry import Point, Polygon as ShapelyPolygon, MultiPolygon
+from pyproj import Transformer
 
 from service.models import SearchResult, Address, Lot, Plan, SurveyMark, ElevationGrid
 from service.utils import sanitise_address, mga_zone_from_longitude
@@ -19,6 +20,8 @@ from service.api.survey_marks import get_survey_mark_info
 from service.api.road import get_road_info, get_road_centreline_info
 from service.api.elevation import fetch_elevation_grid
 from service.api.property import get_address_at_point
+
+
 
 
 def _find_subject_lot(lots: list[Lot], x: float, y: float) -> Lot | None:
@@ -304,4 +307,164 @@ def search_from_lot(
         roads            = roads,
         road_centrelines = road_centrelines,
         elevation_grid   = elevation_grid,
+    )
+
+
+def search_from_polygon(
+    rings: list[list[list[float]]],
+    epsg: int,
+    datum: str = "GDA2020",
+    marks_radius_m: int = 200,
+    grid_spacing_m: int | None = 5,
+    padding_pct: float = 50.0,
+    on_plan_found: Optional[Callable[[Plan], None]] = None,
+) -> SearchResult | None:
+    """
+    Search pipeline starting from a drawn polygon (geometry search).
+
+    Lot query uses direct polygon intersection against the NSW FeatureServer —
+    no radius needed. Mark/road/centreline queries use the polygon centroid
+    with the standard radius approach.
+
+    Args:
+        rings:          Coordinate rings as [[x, y], ...] in the given epsg.
+        epsg:           CRS of the incoming coordinates (any projected EPSG).
+        marks_radius_m: Radius for survey mark query from polygon centroid.
+    """
+    from service.api.lot import get_lots_within_polygon
+
+    # ── 1. Compute centroid in source CRS ────────────────────────────────────
+    try:
+        exterior = ShapelyPolygon(rings[0])
+        centroid  = exterior.representative_point()
+        cx_src, cy_src = centroid.x, centroid.y
+    except Exception:
+        return None
+
+    # ── 2. Reproject centroid to WGS84 for MGA zone detection ────────────────
+    try:
+        to_wgs84 = Transformer.from_crs(epsg, 4326, always_xy=True)
+        lon, _lat = to_wgs84.transform(cx_src, cy_src)
+    except Exception:
+        return None
+
+    zone     = mga_zone_from_longitude(lon)
+    mga_epsg = EPSG_CODES.get((datum, zone))
+    if mga_epsg is None:
+        return None
+
+    # ── 3. Reproject rings to MGA if source CRS differs ──────────────────────
+    if epsg != mga_epsg:
+        try:
+            to_mga = Transformer.from_crs(epsg, mga_epsg, always_xy=True)
+            rings_mga = [
+                [list(to_mga.transform(x, y)) for x, y in ring]
+                for ring in rings
+            ]
+        except Exception:
+            return None
+    else:
+        rings_mga = rings
+
+    # MGA centroid (reproject if needed)
+    try:
+        if epsg != mga_epsg:
+            to_mga = Transformer.from_crs(epsg, mga_epsg, always_xy=True)
+            cx, cy = to_mga.transform(cx_src, cy_src)
+        else:
+            cx, cy = cx_src, cy_src
+    except Exception:
+        return None
+
+    _marks_radius = marks_radius_m
+
+    # ── 4. All spatial queries — run in parallel ──────────────────────────────
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        future_lots        = executor.submit(get_lots_within_polygon, rings_mga, mga_epsg)
+        future_marks       = executor.submit(get_survey_mark_info, cx, cy, mga_epsg, _marks_radius)
+        future_roads       = executor.submit(get_road_info, cx, cy, mga_epsg, 200)
+        future_centrelines = executor.submit(get_road_centreline_info, cx, cy, mga_epsg, 200)
+
+    lots             = future_lots.result()        or []
+    survey_marks     = future_marks.result()       or []
+    roads            = future_roads.result()       or []
+    road_centrelines = future_centrelines.result() or []
+
+    # ── 5. Property addresses at each lot centroid ────────────────────────────
+    def _get_lot_address(lot: Lot) -> tuple[Lot, str | None]:
+        if not lot.geometry:
+            return lot, None
+        try:
+            point = ShapelyPolygon(lot.geometry[0]).representative_point()
+            return lot, get_address_at_point(point.x, point.y, mga_epsg)
+        except Exception:
+            return lot, None
+
+    with ThreadPoolExecutor(max_workers=10) as addr_executor:
+        for future in as_completed([addr_executor.submit(_get_lot_address, lot) for lot in lots]):
+            lot, addr = future.result()
+            lot.address = addr
+
+    # ── 6. No subject lot for polygon search ─────────────────────────────────
+    #     Mark the first returned lot as subject (or leave None — callers handle it)
+    subject_lot = lots[0] if lots else None
+    if subject_lot:
+        subject_lot.is_subject = True
+
+    # ── 7. Plans + elevation grid — run in parallel ───────────────────────────
+    seen_plan_labels = list({lot.plan_label for lot in lots})
+
+    # Use the drawn polygon geometry as the elevation grid extent
+    # (treat rings_mga[0] as the geometry — same shape as lot.geometry)
+    elevation_geometry = rings_mga  # list of rings, same format as Lot.geometry
+
+    def _run_elevation():
+        if not (rings_mga and grid_spacing_m is not None):
+            return None
+        return fetch_elevation_grid(
+            lot_geometry   = elevation_geometry,
+            epsg           = mga_epsg,
+            grid_spacing_m = grid_spacing_m,
+            padding_pct    = padding_pct,
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        future_plans     = executor.submit(_fetch_all_plans, seen_plan_labels, on_plan_found)
+        future_elevation = executor.submit(_run_elevation)
+
+    plans              = future_plans.result()
+    elevation_grid_raw = future_elevation.result()
+    elevation_grid     = ElevationGrid(**elevation_grid_raw) if elevation_grid_raw else None
+
+    # ── 8. Dummy Address for SearchResult ─────────────────────────────────────
+    from service.models import Address as AddressModel
+    dummy_address = AddressModel(
+        input_string    = f"Polygon ({len(lots)} lots)",
+        resolved_string = f"Polygon ({len(lots)} lots)",
+        longitude       = lon,
+        latitude        = _lat,
+        easting         = cx,
+        northing        = cy,
+        suburb          = "",
+        lga             = "",
+        parish          = "",
+        county          = "",
+    )
+
+    return SearchResult(
+        address          = dummy_address,
+        subject_lot      = subject_lot,
+        nearby_lots      = lots,
+        plans            = plans,
+        survey_marks     = survey_marks,
+        search_radius_m  = 0,
+        marks_radius_m   = _marks_radius,
+        cre_map_image    = None,
+        epsg             = mga_epsg,
+        datum            = datum,
+        mga_zone         = zone,
+        roads            = roads,
+        road_centrelines = road_centrelines,
+        elevation_grid   = elevation_grid,
+        search_mode      = "polygon",
     )

@@ -30,6 +30,8 @@ from service.models import Plan
 
 from clients.draw import draw as draw_png
 
+from pydantic import BaseModel, Field
+
 
 def _asdict_json(obj) -> dict:
     """asdict() with date/datetime values converted to isoformat strings."""
@@ -44,6 +46,21 @@ def _asdict_json(obj) -> dict:
             return [_convert(i) for i in v]
         return v
     return {k: _convert(v) for k, v in asdict(obj).items()}
+
+
+class PolygonSearchRequest(BaseModel):
+    coordinates: list[list[list[float]]] = Field(
+        ...,
+        description="Polygon rings as [[x, y], ...]. First ring is the exterior; remaining rings are holes.",
+        example=[[[335000.0, 6251000.0], [335100.0, 6251000.0], [335100.0, 6251100.0], [335000.0, 6251100.0], [335000.0, 6251000.0]]],
+    )
+    epsg: int = Field(
+        ...,
+        description="EPSG code of the input coordinates e.g. 7856 for MGA Zone 56, 4326 for WGS84.",
+    )
+    marks_radius_m: int = Field(200, description="Survey mark search radius from polygon centroid in metres.")
+    grid_spacing_m: int = Field(5, description="Elevation grid spacing in metres.")
+    padding_pct: float  = Field(50.0, description="Padding around polygon bbox for elevation grid as a percentage.")
 
 
 app = FastAPI(
@@ -477,3 +494,60 @@ def search_folio_endpoint(
     
     record_search(result)
     return JSONResponse(content=to_geojson(result))
+
+
+@app.post("/search/polygon")
+def search_polygon_endpoint(body: PolygonSearchRequest):
+    """
+    Search by drawn polygon instead of an address or folio.
+
+    The lot query uses direct polygon intersection — all cadastral lots that
+    intersect the polygon are returned. Survey marks, roads, and centrelines
+    are queried from the polygon centroid using the standard radius approach.
+
+    Returns the same GeoJSON as GET /search — no client changes needed.
+
+    POST (not GET) because coordinate lists can be large.
+    """
+    from service.search import search_from_polygon
+
+    result = search_from_polygon(
+        rings          = body.coordinates,
+        epsg           = body.epsg,
+        marks_radius_m = body.marks_radius_m,
+        grid_spacing_m = body.grid_spacing_m,
+        padding_pct    = body.padding_pct,
+    )
+
+    if result is None:
+        raise HTTPException(status_code=422, detail="Polygon search failed — check coordinate format and EPSG.")
+
+    if not result.nearby_lots:
+        raise HTTPException(status_code=404, detail="No cadastral lots found within the given polygon.")
+
+    record_search(result)
+    return JSONResponse(content=to_geojson(result))
+
+
+@app.get("/address/suggest")
+def address_suggest_endpoint(
+    q: str = Query(..., description="Partial or full address to search for"),
+    limit: int = Query(10, description="Maximum number of suggestions to return"),
+):
+    """
+    Returns a list of matching addresses from NSW Spatial Services.
+    
+    Used for address autocomplete — user types a partial address,
+    this returns candidates for dropdown selection.
+    
+    Example: /address/suggest?q=14 Dellview Tamarama
+    Returns: ["14-16 DELLVIEW STREET TAMARAMA", "14 DELLVIEW STREET TAMARAMA", ...]
+    """
+    from service.api.address import get_address_suggestions
+    
+    suggestions = get_address_suggestions(q, limit=limit)
+    
+    if not suggestions:
+        raise HTTPException(status_code=404, detail=f"No matching addresses found for '{q}'")
+    
+    return JSONResponse(content={"suggestions": suggestions})

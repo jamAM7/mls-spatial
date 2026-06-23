@@ -130,3 +130,42 @@ def get_address_coordinates(address_string: str, out_sr: int = 7856) -> Address 
         surface_level_ahd = surface_level_ahd,
     )
 
+
+def get_address_suggestions(address_string: str, limit: int = 10) -> list[str] | None:
+    """
+    Returns a list of matching addresses from NSW API using LIKE query.
+    
+    Used for address suggestion/autocomplete — user types partial address,
+    this returns candidates for the user to pick from.
+    
+    Example: "14 Dellview Street Tamarama" might return:
+    - "14-16 DELLVIEW STREET TAMARAMA"
+    - "14 DELLVIEW STREET TAMARAMA"
+    """
+    from service.utils import sanitise_address
+    
+    normalised = sanitise_address(address_string)
+    
+    params = {
+        "where":          f"address LIKE '%{normalised}%'",
+        "outFields":      "address",
+        "returnGeometry": False,
+        "resultRecordCount": limit,
+        "f":              "json"
+    }
+    
+    try:
+        response = requests.get(ADDR_URL, params=params)
+        data = response.json()
+        features = data.get("features", [])
+        
+        if not features:
+            return None
+        
+        # Extract unique addresses
+        addresses = list(set(f["attributes"]["address"] for f in features))
+        return sorted(addresses)
+    
+    except Exception as e:
+        print(f"[address] Error querying suggestions for '{address_string}': {e}")
+        return None
