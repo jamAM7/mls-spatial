@@ -4,6 +4,8 @@
 
 NSW cadastral search tool — queries Spatial Services APIs to return lots, survey plans and survey marks for a given address. Generates cadastral drawings, CRE map images and downloads plan documents from Google Drive.
 
+<img width="800" height="450" alt="Image" src="https://github.com/user-attachments/assets/b207a83e-a027-48a0-a022-bf34d3fe87e1" />
+
 ## Requirements
 - Python 3.11
 - `credentials.json` — Google OAuth credentials (provided separately, never committed to git)
