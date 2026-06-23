@@ -9,24 +9,53 @@ ADMIN_BASE = "https://portal.spatial.nsw.gov.au/server/rest/services/NSW_Adminis
 ELEV_URL = "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_5M_Elevation/ImageServer/identify"
 
 
+# def _query_address(address_string: str, out_sr: str) -> dict | None:
+#     """Private helper — queries address API with given output spatial reference"""
+#     params = {
+#         "where":          f"address = '{address_string.upper()}'",
+#         "outFields":      "address",
+#         "returnGeometry": True,
+#         "outSR":          out_sr,
+#         "f":              "json"
+#     }
+
+#     response = requests.get(ADDR_URL, params=params)
+#     data = response.json()
+
+#     features = data.get("features", [])
+#     if not features:
+#         return None
+
+#     return features[0]
+
+
+# ADMIN_LAYERS = {
+#     "suburb": (2,  "suburbname"),
+#     "lga":    (8,  "lganame"),
+#     "parish": (5,  "parishname"),
+#     "county": (11, "countyname"),
+# }
 def _query_address(address_string: str, out_sr: str) -> dict | None:
-    """Private helper — queries address API with given output spatial reference"""
-    params = {
-        "where":          f"address = '{address_string.upper()}'",
-        "outFields":      "address",
-        "returnGeometry": True,
-        "outSR":          out_sr,
-        "f":              "json"
-    }
+    def _query(where: str) -> dict | None:
+        params = {
+            "where":          where,
+            "outFields":      "address",
+            "returnGeometry": True,
+            "outSR":          out_sr,
+            "f":              "json",
+        }
+        response = requests.get(ADDR_URL, params=params)
+        features = response.json().get("features", [])
+        return features[0] if features else None
 
-    response = requests.get(ADDR_URL, params=params)
-    data = response.json()
+    # Try exact match first — fastest and most precise
+    result = _query(f"address = '{address_string.upper()}'")
+    if result:
+        return result
 
-    features = data.get("features", [])
-    if not features:
-        return None
-
-    return features[0]
+    # Fall back to starts-with LIKE — handles suburb name variations
+    # e.g. "1 SMITH STREET BONDI" matches "1 SMITH STREET BONDI BEACH"
+    return _query(f"address LIKE '{address_string.upper()}%'")
 
 
 ADMIN_LAYERS = {
@@ -131,41 +160,73 @@ def get_address_coordinates(address_string: str, out_sr: int = 7856) -> Address 
     )
 
 
+# def get_address_suggestions(address_string: str, limit: int = 10) -> list[str] | None:
+#     """
+#     Returns a list of matching addresses from NSW API using LIKE query.
+    
+#     Used for address suggestion/autocomplete — user types partial address,
+#     this returns candidates for the user to pick from.
+    
+#     Example: "14 Dellview Street Tamarama" might return:
+#     - "14-16 DELLVIEW STREET TAMARAMA"
+#     - "14 DELLVIEW STREET TAMARAMA"
+#     """
+#     from service.utils import sanitise_address
+    
+#     normalised = sanitise_address(address_string)
+    
+#     params = {
+#         "where":          f"address LIKE '%{normalised}%'",
+#         "outFields":      "address",
+#         "returnGeometry": False,
+#         "resultRecordCount": limit,
+#         "f":              "json"
+#     }
+    
+#     try:
+#         response = requests.get(ADDR_URL, params=params)
+#         data = response.json()
+#         features = data.get("features", [])
+        
+#         if not features:
+#             return None
+        
+#         # Extract unique addresses
+#         addresses = list(set(f["attributes"]["address"] for f in features))
+#         return sorted(addresses)
+    
+#     except Exception as e:
+#         print(f"[address] Error querying suggestions for '{address_string}': {e}")
+#         return None
 def get_address_suggestions(address_string: str, limit: int = 10) -> list[str] | None:
-    """
-    Returns a list of matching addresses from NSW API using LIKE query.
-    
-    Used for address suggestion/autocomplete — user types partial address,
-    this returns candidates for the user to pick from.
-    
-    Example: "14 Dellview Street Tamarama" might return:
-    - "14-16 DELLVIEW STREET TAMARAMA"
-    - "14 DELLVIEW STREET TAMARAMA"
-    """
     from service.utils import sanitise_address
-    
+
     normalised = sanitise_address(address_string)
-    
+
+    # AND together a LIKE condition per token so "14 DELLVIEW TAMARAMA" matches
+    # "14-16 DELLVIEW STREET TAMARAMA" — single full-string LIKE would miss it
+    tokens = [t for t in normalised.split() if len(t) > 1]
+    if not tokens:
+        return None
+
+    where = " AND ".join(f"address LIKE '%{token}%'" for token in tokens)
+
     params = {
-        "where":          f"address LIKE '%{normalised}%'",
-        "outFields":      "address",
-        "returnGeometry": False,
+        "where":             where,
+        "outFields":         "address",
+        "returnGeometry":    False,
         "resultRecordCount": limit,
-        "f":              "json"
+        "f":                 "json",
     }
-    
+
     try:
         response = requests.get(ADDR_URL, params=params)
         data = response.json()
         features = data.get("features", [])
-        
         if not features:
             return None
-        
-        # Extract unique addresses
-        addresses = list(set(f["attributes"]["address"] for f in features))
+        addresses = list({f["attributes"]["address"] for f in features})
         return sorted(addresses)
-    
     except Exception as e:
         print(f"[address] Error querying suggestions for '{address_string}': {e}")
         return None
